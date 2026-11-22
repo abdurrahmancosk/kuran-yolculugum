@@ -14,3 +14,5 @@ keystore/
 *.jks
 *.keystore
 signing.properties
+__pycache__/
+*.pyc
