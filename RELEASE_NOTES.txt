@@ -1,0 +1,1 @@
+Otomatik güncelleme eklendi: uygulama her gün yeni sürümü denetleyip kendiliğinden kurar. Ebeveyn Paneli'ne "Otomatik Güncelleme" bölümü eklendi.
