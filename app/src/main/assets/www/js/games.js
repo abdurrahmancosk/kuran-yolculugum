@@ -73,13 +73,14 @@ window.K = window.K || {};
     c.stage.append(card, row(replay, next));
     async function narrate() {
       for (let i = 0; i < C.lines.length; i++) {
-        const line = typeof C.lines[i] === 'function' ? C.lines[i]() : C.lines[i];
+        const ln = typeof C.lines[i] === 'function' ? C.lines[i]() : C.lines[i];
+        const line = typeof ln === 'string' ? ln : ln.t;
         if (glyph && i === 0) { glyph.textContent = demo[1].ar; glyph.classList.remove('bounce'); void glyph.offsetWidth; glyph.classList.add('bounce'); }
-        await S.say(line); c.chk();
-        if (/Dinle/.test(line) && !C.harekeAnim) {
-          for (let j = 0; j < demo.length; j++) { cells[j] && cells[j].classList.add('hl'); await S.item(demo[j]); c.chk(); cells[j] && cells[j].classList.remove('hl'); await sleep(200); }
-        } else if (/Dinle/.test(line)) { await S.item(demo[1]); c.chk(); }
+        await S.say(line, { hv: typeof ln === 'string' ? undefined : ln.hv }); c.chk();
       }
+      // Örnekleri Diyanet hocasının sesinden dinlet
+      if (C.harekeAnim) { await S.item(demo[0]); c.chk(); await sleep(200); await S.item(demo[1]); c.chk(); return; }
+      for (let j = 0; j < demo.length; j++) { cells[j] && cells[j].classList.add('hl'); await S.item(demo[j]); c.chk(); cells[j] && cells[j].classList.remove('hl'); await sleep(250); }
     }
     await narrate();
     next.disabled = false; next.classList.add('pulse');
@@ -121,7 +122,7 @@ window.K = window.K || {};
           if (it.tip) { await S.say(it.tip); c.chk(); }
           await S.say(`Haydi sen de söyle: ${it.label}!`);
         } else if (mode === 'forms') {
-          await S.say(`${it.label} harfi.`); c.chk();
+          await S.say(`${it.label} harfi.`, { item: it }); c.chk();
           const forms = K.L.forms(it.lid);
           for (let j = 0; j < forms.length; j++) {
             cells[j].style.background = '#FFE58A';
@@ -279,7 +280,7 @@ window.K = window.K || {};
         } else if (attempts === 4 && ev.prog < 0.4) { S.say('Harfin içini renklerle boyamaya devam et!'); }
       };
       paint.addEventListener('pointerup', up); paint.addEventListener('pointercancel', up);
-      await S.say(i === 0 ? `Parmağınla ${it.label} harfinin içini boya!` : `Şimdi ${it.label} harfi!`);
+      await S.say(i === 0 ? `Parmağınla ${it.label} harfinin içini boya!` : `Şimdi ${it.label} harfi!`, { item: it });
       await doneP; c.chk();
     }
   };
@@ -328,7 +329,7 @@ window.K = window.K || {};
           } else {
             wrongs++; c.mistake(target.lid); K.Sfx.soft(); c.coach.sad(); K.N.vibrate(40);
             b.classList.add('bad', 'shake'); setTimeout(() => b.classList.remove('shake'), 500);
-            await S.say(o.kind === 'letter' ? `Bu ${o.label}.` : 'Bu farklı.', { rate: 1.05 });
+            await S.say(o.kind === 'letter' ? `Bu ${o.label}.` : 'Bu farklı.', { rate: 1.05, item: o.kind === 'letter' ? o : null });
             if (!solved) {
               if (wrongs >= 2) grid.querySelectorAll('.choice').forEach((x, ix) => { if (opts[ix] === target) x.classList.add('glow'); });
               ask();
@@ -341,7 +342,7 @@ window.K = window.K || {};
       async function ask(replayOnly) {
         if (visual) { await S.say('Bu şekil hangi harfin?'); return; }
         if (!replayOnly) {
-          if (target.kind === 'letter') { await S.say(`Hangisi ${target.label}?`); return; }
+          if (target.kind === 'letter') { await S.say(`Hangisi ${target.label}?`, { item: target }); return; }
           await S.say(r === 0 ? 'Dinle ve doğru olanı bul!' : 'Hangisi?'); c.chk();
         }
         await S.item(target);
@@ -369,7 +370,7 @@ window.K = window.K || {};
     const allP = new Promise((r) => (resAll = r));
     c.onCleanup(() => { alive = false; });
     function announce() {
-      return target.kind === 'letter' ? S.say(`${target.label} harfi olan balonları patlat!`) : S.say('Bu sesi taşıyan balonları patlat!').then(() => S.item(target));
+      return target.kind === 'letter' ? S.say(`${target.label} harfi olan balonları patlat!`, { item: target }) : S.say('Bu sesi taşıyan balonları patlat!').then(() => S.item(target));
     }
     function spawn() {
       if (!alive || !field.isConnected) return;
@@ -401,7 +402,7 @@ window.K = window.K || {};
         } else {
           b.classList.add('wrong'); setTimeout(() => b.classList.remove('wrong'), 450); K.Sfx.soft();
           c.mistake(target.lid, 0.5);
-          if (it.kind === 'letter') S.say(`Bu ${it.label}.`, { rate: 1.1 });
+          if (it.kind === 'letter') S.say(`Bu ${it.label}.`, { rate: 1.1, item: it });
         }
       });
     }

@@ -15,9 +15,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -28,7 +25,6 @@ import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
-import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -53,162 +49,7 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
         main.post { try { web.evaluateJavascript(js, null) } catch (_: Exception) {} }
     }
 
-    // ---------------------------------------------------------------- TTS
-    private var tts: TextToSpeech? = null
-    @Volatile private var ttsReady = false
-    private val voiceCache = HashMap<String, Voice?>()
-
-    init {
-        initTts()
-    }
-
-    private fun initTts() {
-        tts = TextToSpeech(ctx) { status ->
-            ttsReady = status == TextToSpeech.SUCCESS
-            if (ttsReady) {
-                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) { emit("tts", utteranceId ?: "", "start") }
-                    override fun onDone(utteranceId: String?) { emit("tts", utteranceId ?: "", "done") }
-                    @Deprecated("Deprecated in Java")
-                    override fun onError(utteranceId: String?) { emit("tts", utteranceId ?: "", "error") }
-                    override fun onError(utteranceId: String?, errorCode: Int) { emit("tts", utteranceId ?: "", "error") }
-                    override fun onStop(utteranceId: String?, interrupted: Boolean) { emit("tts", utteranceId ?: "", "stop") }
-                })
-            }
-            emit("ttsready", "", ttsStatusJson())
-        }
-    }
-
-    private fun localeFor(lang: String): Locale = when {
-        lang.startsWith("ar") -> Locale("ar")
-        lang.startsWith("en") -> Locale.US
-        else -> Locale("tr", "TR")
-    }
-
-    private fun bestVoice(loc: Locale): Voice? {
-        val key = loc.language
-        if (voiceCache.containsKey(key)) return voiceCache[key]
-        val t = tts ?: return null
-        val v = try {
-            val all = t.voices?.filter {
-                it.locale.language == loc.language &&
-                    !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
-            } ?: emptyList()
-            val chosen = prefs.getString("voice_$key", null)
-            all.firstOrNull { it.name == chosen }
-                // ebeveyn seçmediyse adında "male" geçen (erkek) sesi tercih et
-                ?: all.filter { it.name.lowercase().contains("male") && !it.name.lowercase().contains("female") }.minByOrNull { if (it.isNetworkConnectionRequired) 1 else 0 }
-                ?: all.sortedWith(compareBy<Voice>({ it.isNetworkConnectionRequired }, { -it.quality })).firstOrNull()
-        } catch (e: Exception) { null }
-        voiceCache[key] = v
-        return v
-    }
-
-    @JavascriptInterface
-    fun ttsVoices(lang: String): String {
-        val a = JSONArray()
-        val loc = localeFor(lang)
-        try {
-            tts?.voices?.filter { it.locale.language == loc.language }?.sortedBy { it.name }?.forEach {
-                a.put(JSONObject().put("name", it.name).put("net", it.isNetworkConnectionRequired)
-                    .put("ok", !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)))
-            }
-        } catch (_: Exception) {}
-        return a.toString()
-    }
-
-    @JavascriptInterface
-    fun ttsSetVoice(lang: String, name: String) {
-        val key = localeFor(lang).language
-        prefs.edit().putString("voice_$key", name).apply()
-        main.post { voiceCache.remove(key) }
-    }
-
-    @JavascriptInterface
-    fun ttsGetVoice(lang: String): String = prefs.getString("voice_" + localeFor(lang).language, "") ?: ""
-
-    private fun langState(loc: Locale): String {
-        val t = tts ?: return "none"
-        return try {
-            when (t.isLanguageAvailable(loc)) {
-                TextToSpeech.LANG_MISSING_DATA -> "missing"
-                TextToSpeech.LANG_NOT_SUPPORTED -> "none"
-                else -> "ok"
-            }
-        } catch (e: Exception) { "none" }
-    }
-
-    private fun ttsStatusJson(): String {
-        val o = JSONObject()
-        o.put("ready", ttsReady)
-        if (ttsReady) {
-            o.put("tr", langState(Locale("tr", "TR")))
-            o.put("ar", langState(Locale("ar")))
-            o.put("engine", tts?.defaultEngine ?: "")
-        }
-        return o.toString()
-    }
-
-    @JavascriptInterface
-    fun ttsStatus(): String = ttsStatusJson()
-
-    @JavascriptInterface
-    fun ttsSpeak(id: String, text: String, lang: String, rate: Float, pitch: Float): Boolean {
-        if (!ttsReady) return false
-        val loc = localeFor(lang)
-        if (langState(loc) != "ok") return false
-        main.post {
-            val t = tts ?: return@post
-            try {
-                val v = bestVoice(loc)
-                if (v != null) t.voice = v else t.language = loc
-                t.setSpeechRate(rate.coerceIn(0.3f, 2f))
-                t.setPitch(pitch.coerceIn(0.5f, 2f))
-                val params = Bundle()
-                params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1f)
-                val r = t.speak(text, TextToSpeech.QUEUE_FLUSH, params, id)
-                if (r != TextToSpeech.SUCCESS) emit("tts", id, "error")
-            } catch (e: Exception) {
-                emit("tts", id, "error")
-            }
-        }
-        return true
-    }
-
-    @JavascriptInterface
-    fun ttsStop() {
-        main.post { try { tts?.stop() } catch (_: Exception) {} }
-    }
-
-    @JavascriptInterface
-    fun openTtsSettings() {
-        main.post {
-            try {
-                activity.startActivity(Intent("com.android.settings.TTS_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (e: Exception) {
-                try { activity.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) } catch (_: Exception) {}
-            }
-        }
-    }
-
-    @JavascriptInterface
-    fun installTtsData() {
-        main.post {
-            try {
-                activity.startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (e: Exception) { openTtsSettings() }
-        }
-    }
-
-    @JavascriptInterface
-    fun ttsReinit() {
-        main.post {
-            try { tts?.shutdown() } catch (_: Exception) {}
-            voiceCache.clear()
-            ttsReady = false
-            initTts()
-        }
-    }
+    // Yapay ses (TextToSpeech) bilinçli olarak YOK: tüm sesler gömülü insan kayıtlarıdır (assets/www/hv).
 
     // ---------------------------------------------------------------- ses çalar (önbellekli)
     private var player: MediaPlayer? = null
@@ -438,7 +279,6 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
         if (micPermission() != "granted") return false
         main.post {
             stopPlayerInternal(true)
-            try { tts?.stop() } catch (_: Exception) {}
             releaseRecorder()
             try {
                 val tmp = File(recDir, "tmp_" + System.currentTimeMillis() + ".m4a")
@@ -636,13 +476,11 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
     fun onPause() {
         playToken.incrementAndGet()
         stopPlayerInternal(true)
-        try { tts?.stop() } catch (_: Exception) {}
         if (recorder != null) finishRecording()
     }
 
     fun release() {
         onPause()
-        try { tts?.shutdown() } catch (_: Exception) {}
         io.shutdownNow()
         prefetchExec.shutdownNow()
     }

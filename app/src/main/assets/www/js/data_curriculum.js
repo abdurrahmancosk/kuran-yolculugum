@@ -19,40 +19,39 @@ window.K = window.K || {};
     { id: 'sure', name: 'Sûre Okuma Yolu', icon: '🌟', color: '#FFF1B8', node: '#E0AE10', desc: 'Artık Kur\'an okuyorum!' },
   ];
 
+  // Kavram anlatımları: sesli satırlar Diyanet Elif-Ba CD'sindeki hocanın kendi cümleleridir (insan sesi).
+  // { t, hv } → kayıtlı; düz metin → yalnız balonda gösterilir (ebeveyn isterse kendi sesiyle kaydedebilir).
+  const CD = (hv) => ({ t: K.HV_TEXT ? K.HV_TEXT[hv] : '', hv });
   const CONCEPTS = {
+    harfler: { title: 'Elif-Ba harfleri', demo: () => ['elif', 'be', 'te'].map((id) => I.letter(id)), lines: [CD('tr_harfler')] },
     forms: { title: 'Harfler el ele tutuşur', demo: () => K.L.forms('be'),
-      lines: ['Harfler kelimede yan yana gelince el ele tutuşur.', 'Bu yüzden başta, ortada ve sonda biraz farklı görünürler.', 'Bak! Be harfi yalnızken, başta, ortada ve sonda böyle yazılır.'] },
+      lines: [CD('tr_sekil'), 'Harfler kelimede yan yana gelince el ele tutuşur. Bu yüzden başta, ortada ve sonda biraz farklı görünürler.'] },
     bitisme: { title: 'Utangaç harfler', demo: () => ['elif', 'dal', 'zel', 'ra', 'ze', 'vav'].map((id) => I.letter(id)),
-      lines: ['Bu altı harf biraz utangaçtır: Elif, Dal, Zel, Ra, Ze ve Vav.', 'Önlerindeki harfle el ele tutuşurlar, ama arkalarındaki harfe ellerini vermezler.', 'Bu yüzden sadece iki şekilleri vardır.'] },
-    u: { title: 'Üstün', demo: () => [I.letter('be'), I.syl('be', 'u')], harekeAnim: 'u',
-      lines: ['Harfin üstüne konan bu küçük eğik çizgiye üstün denir.', 'Üstün, harfi e ya da a sesiyle okutur.', 'Dinle: Be üstün, be!'] },
-    e: { title: 'Esre', demo: () => [I.letter('be'), I.syl('be', 'e')], harekeAnim: 'e',
-      lines: ['Harfin altına konan bu küçük eğik çizgiye esre denir.', 'Esre, harfi i ya da ı sesiyle okutur.', 'Dinle: Be esre, bi!'] },
-    o: { title: 'Ötre', demo: () => [I.letter('be'), I.syl('be', 'o')], harekeAnim: 'o',
-      lines: ['Harfin üstüne konan bu küçük vav şekline ötre denir.', 'Ötre, harfi ü ya da u sesiyle okutur.', () => 'Dinle: Be ötre, ' + I.syl('be', 'o').say + '!'] },
-    mix: { title: 'Hareke karışık', demo: () => [I.syl('be', 'u'), I.syl('be', 'e'), I.syl('be', 'o')],
-      lines: ['Şimdi üç harekeyi birlikte kullanacağız!', 'Üstün yukarıda, esre aşağıda, ötre yine yukarıda ama küçük bir vav gibi.', 'Dikkatle dinle ve doğru harekeyi seç!'] },
-    hece: { title: 'Heceleri birleştir', demo: () => [K.C.autoWord('كَتَبَ')],
-      lines: ['Harekeli harfleri yan yana okuyunca kelimeler ortaya çıkar.', 'Sağdan sola doğru okuruz.', 'Dinle: ke, te, be... ketebe!'] },
-    cezm: { title: 'Cezm', demo: () => [I.cezm('be', 'u')],
-      lines: ['Harfin üstündeki bu küçük yuvarlağa cezm denir.', 'Cezmli harf durur ve kendinden önceki harfe bağlanarak okunur.', 'Dinle: Elif üstün, Be cezm... eb!'] },
-    tenvin: { title: 'Tenvin', demo: () => [I.tenvin('be', 'u'), I.tenvin('be', 'e'), I.tenvin('be', 'o')],
-      lines: ['İki üstün, iki esre ve iki ötreye tenvin denir.', 'Tenvin, okuduğumuz sesin sonuna bir n sesi ekler.', () => 'Dinle: ben, bin, ' + I.tenvin('be', 'o').say + '!'] },
-    sedde: { title: 'Şedde', demo: () => [I.shadda('be')],
-      lines: ['Harfin üstündeki bu küçük işarete şedde denir. Küçük dişlere benzer.', 'Şeddeli harf iki kere okunur.', 'Dinle: eb... be! Ebbe!'] },
+      lines: ['Bu altı harf kendinden sonraki harfe bitişmez: Elif, Dal, Zel, Ra, Ze ve Vav. Bu yüzden sadece iki şekilleri vardır.'] },
+    u: { title: 'Üstün', demo: () => [I.letter('be'), I.syl('be', 'u')], harekeAnim: 'u', lines: [CD('tr_hareke'), CD('tr_ustun')] },
+    e: { title: 'Esre', demo: () => [I.letter('be'), I.syl('be', 'e')], harekeAnim: 'e', lines: [CD('tr_esre')] },
+    o: { title: 'Ötre', demo: () => [I.letter('be'), I.syl('be', 'o')], harekeAnim: 'o', lines: [CD('tr_otre')] },
+    mix: { title: 'Hareke karışık', demo: () => [I.syl('be', 'u'), I.syl('be', 'e'), I.syl('be', 'o')], lines: [CD('tr_hareke')] },
+    hece: { title: 'Heceleri birleştir', demo: () => [K.C.autoWord('كَتَبَ', 'cd4_9')],
+      lines: ['Harekeli harfleri yan yana okuyunca kelimeler ortaya çıkar. Sağdan sola doğru okuruz.'] },
+    cezm: { title: 'Cezm', demo: () => [I.cezm('be', 'u'), I.cezm('be', 'e'), I.cezm('be', 'o')], lines: [CD('tr_cezm1'), CD('tr_cezm2')] },
+    tenvin: { title: 'Tenvin', demo: () => TV1().slice(0, 3), lines: [CD('tr_tenvin_u')] },
+    tenvin2: { title: 'İki esre, iki ötre', demo: () => [TV2()[0], TV2()[7]], lines: [CD('tr_tenvin_e'), CD('tr_tenvin_o')] },
+    sedde: { title: 'Şedde', demo: () => [I.shadda('be', 'u'), I.shadda('be', 'e'), I.shadda('be', 'o')], lines: [CD('tr_sedde1'), CD('tr_sedde2')] },
     med: { title: 'Med harfleri', demo: () => [I.med('be', 'u'), I.med('be', 'e'), I.med('be', 'o')],
-      lines: ['Elif, Vav ve Ye bazen sesi uzatır. Bunlara med harfleri denir.', 'Üstünden sonra elif gelirse a sesini uzatırız: bâ!', 'Esreden sonra ye gelirse bî, ötreden sonra vav gelirse bû diye uzatırız.'] },
-    ceker: { title: 'Çeker', demo: () => [I.word('هٰذَا', 'hâzâ')],
-      lines: ['Harfin üstündeki bu küçük dik çizgiye çeker denir.', 'Çeker de sesi bir elif kadar uzatır.', 'Dinle: hâzâ!'] },
+      lines: [CD('tr_med')] },
+    medk: { title: 'Uzatma harfleri', demo: () => [MW()[0], MW()[8], MW()[12]], lines: [CD('tr_med_elif'), CD('tr_med_ya'), CD('tr_med_vav')] },
+    ceker: { title: 'Çeker', demo: () => [W('هٰذَا', 'hâzâ', 'cd23_16')], lines: [CD('tr_ceker')] },
     elif_lam: { title: 'Elif-Lâm ve Allah lafzı', demo: () => [wordFrom(1, 2, 1), wordFrom(1, 2, 2)],
-      lines: ['Kelimenin başındaki Elif ile Lâm\'a elif-lâm denir.', 'Elif-lâm ile başlayan kelimeleri el diye okumaya başlarız: el-hamdü!', 'Bu kelimeleri gerçek Kur\'an okuyucusundan dinleyeceğiz.'] },
+      lines: [CD('tr_el'), CD('tr_lafza')] },
   };
 
   // ------------------------------------------------------------ yardımcılar
   function otreFix(s) { return (K.Store && K.Store.s.settings.otre === 'u') ? s.replace(/ü/g, 'u').replace(/Ü/g, 'U') : s; }
-  function W(ar, tr) { return I.word(ar, otreFix(tr)); }
+  /** Kelime; hv: Diyanet Elif-Ba CD kaydının anahtarı ('cdDERS_SIRA'). */
+  function W(ar, tr, hv) { return I.word(ar, otreFix(tr), { hv }); }
   /** Harekeli harflerden kendiliğinden okunuş üretir (kalın harf komşuluğunda üstün 'a' okunur). */
-  function autoWord(ar) {
+  function autoWord(ar, hv) {
     const syl = K.L.splitSyllables(ar);
     const parts = syl.map((s, i) => {
       let lab = s.label;
@@ -64,7 +63,7 @@ window.K = window.K || {};
       return lab;
     });
     const tr = parts.join('');
-    const it = I.word(ar, tr);
+    const it = I.word(ar, tr, { hv });
     it.sylls = syl;
     return it;
   }
@@ -100,6 +99,7 @@ window.K = window.K || {};
       items: () => g.map((id) => I.letter(id)),
       review: () => prev.map((id) => I.letter(id)),
       steps: [
+        ...(gi === 0 ? [{ t: 'concept', c: 'harfler' }] : []),
         { t: 'intro' }, { t: 'trace' },
         { t: 'pick', rounds: 6, k: gi < 2 ? 3 : 4 },
         { t: 'balloons', targets: 5 },
@@ -145,60 +145,82 @@ window.K = window.K || {};
     items: () => HK.flat().flatMap((id) => ['u', 'e', 'o'].map((h) => I.syl(id, h))), review: () => [],
     steps: [{ t: 'concept', c: 'mix' }, { t: 'hareke', rounds: 8, harekes: ['u', 'e', 'o'] }, { t: 'pick', rounds: 8, k: 3, minimal: true }, { t: 'memory', pairs: 4 }] });
 
-  // 4) Hece Köprüsü
-  const D1 = ['بَتَ', 'تَبَ', 'بَدَ', 'دَبَ', 'كَتَ', 'تَكَ', 'لَمَ', 'مَلَ', 'نَزَ', 'سَبَ', 'جَعَ', 'فَتَ'];
-  const D2 = ['كَتَبَ', 'خَلَقَ', 'ذَهَبَ', 'جَعَلَ', 'نَصَرَ', 'فَتَحَ', 'رَزَقَ', 'صَدَقَ', 'دَخَلَ', 'خَرَجَ', 'نَظَرَ', 'سَجَدَ'];
-  const D3 = ['عَلِمَ', 'سَمِعَ', 'حَسِبَ', 'شَرِبَ', 'كُتِبَ', 'خُلِقَ', 'فُتِحَ', 'جُعِلَ', 'نُصِرَ', 'رُزِقَ', 'ذُكِرَ', 'حَمَلَ'];
-  [[D1, 'İki heceli okuma', true], [D2, 'Üstünlü kelimeler', false], [D3, 'Karışık harekeli kelimeler', false]].forEach(([list, title, first], i) => {
-    add({ id: 'hece' + (i + 1), island: 'hece', title, glyph: list[0],
-      items: () => list.map(autoWord), review: () => [],
+  // 4) Hece Köprüsü — kelimeler ve sesleri Diyanet Elif-Ba CD'sinden (ders 4, 7, 8)
+  const D1 = [['أَدَبَ', 'cd4_1'], ['دَرَكَ', 'cd4_3'], ['وَرَدَ', 'cd4_6'], ['وَرَعَ', 'cd4_7'], ['وَزَنَ', 'cd4_8'], ['كَتَبَ', 'cd4_9'],
+    ['نَزَلَ', 'cd4_11'], ['يَدَكَ', 'cd4_12'], ['حَسَدَ', 'cd4_13'], ['نَصَرَ', 'cd4_26'], ['فَسَدَ', 'cd4_24'], ['شَرَعَ', 'cd4_22']];
+  const D2 = [['اَمِنَ', 'cd7_2'], ['اَزِفَ', 'cd7_4'], ['شَرِبَ', 'cd7_5'], ['لَبِسَ', 'cd7_6'], ['عَلِمَ', 'cd7_9'], ['حَمِدَ', 'cd7_10'],
+    ['سَمِعَ', 'cd7_21'], ['حَسِبَ', 'cd7_23'], ['وَسِعَ', 'cd7_24'], ['لَهَبِ', 'cd7_15'], ['مَسَدِ', 'cd7_16'], ['مَلِكِ', 'cd7_17']];
+  const D3 = [['رُزِقَ', 'cd8_1'], ['كُتِبَ', 'cd8_3'], ['ذُكِرَ', 'cd8_6'], ['خُلِقَ', 'cd8_11'], ['حُمِلَ', 'cd8_17'], ['رُفِعَ', 'cd8_18'],
+    ['يَلِدُ', 'cd8_16'], ['يَرِثُ', 'cd8_14'], ['كُتُبُ', 'cd8_27'], ['رُسُلُ', 'cd8_25'], ['صَمَدُ', 'cd8_24'], ['مَثَلُ', 'cd8_22']];
+  const AW = (list) => list.map(([ar, hv]) => autoWord(ar, hv));
+  [[D1, 'Üstünlü kelimeler', true], [D2, 'Esreli kelimeler', false], [D3, 'Ötreli kelimeler', false]].forEach(([list, title, first], i) => {
+    add({ id: 'hece' + (i + 1), island: 'hece', title, glyph: list[0][0],
+      items: () => AW(list), review: () => [],
       steps: [
         ...(first ? [{ t: 'concept', c: 'hece' }] : []),
         { t: 'intro', mode: 'word', max: 6 },
-        { t: 'read', lines: () => chunk(list.map(autoWord), 3), chant: true },
+        { t: 'read', lines: () => chunk(AW(list), 3), chant: true },
         { t: 'pick', rounds: 6, k: 3 },
         { t: 'memory', pairs: 3 },
       ] });
   });
 
-  // 5) Cezm Kalesi
+  // 5) Cezm Kalesi — harf satırları CD ders 9, kelimeler CD ders 10
   const CZ = ['be', 'te', 'dal', 'ra', 'sin', 'kaf', 'lam', 'mim', 'nun'];
   add({ id: 'cezm1', island: 'cezm', title: 'Cezm ile tanış', glyph: 'اَبْ',
     items: () => CZ.map((id) => I.cezm(id, 'u')), review: () => CZ.flatMap((id) => ['u', 'e', 'o'].map((h) => I.cezm(id, h))),
     steps: [{ t: 'concept', c: 'cezm' }, { t: 'read', lines: () => CZ.slice(0, 6).map((id) => ['u', 'e', 'o'].map((h) => I.cezm(id, h))), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
-  const CW = () => [W('قُلْ', 'kul'), W('لَمْ', 'lem'), W('مِنْ', 'min'), W('عَنْ', 'an'), W('هَلْ', 'hel'), W('بَلْ', 'bel'), W('قَدْ', 'kad'), W('لَنْ', 'len'),
-    W('كَمْ', 'kem'), W('هُمْ', 'hüm'), W('يَلِدْ', 'yelid'), W('اَنْعَمْتَ', 'en\'amte'), W('نَعْبُدُ', 'na\'büdü'), W('اَلْحَمْدُ', 'elhamdü')];
+  const CW = () => [W('لَمْ', 'lem', 'cd10_2'), W('قُلْ', 'kul', 'cd10_3'), W('هُمْ', 'hüm', 'cd10_4'), W('مِنْ', 'min', 'cd10_5'), W('اِنْ', 'in', 'cd10_6'),
+    W('لَكُمْ', 'leküm', 'cd10_9'), W('لَهُمْ', 'lehüm', 'cd10_10'), W('اَنْتُمْ', 'entüm', 'cd10_11'), W('كَيْفَ', 'keyfe', 'cd10_13'), W('يَوْمَ', 'yevme', 'cd10_14'),
+    W('اَنْزَلَ', 'enzele', 'cd10_17'), W('اَرْسَلَ', 'ersele', 'cd10_18'), W('كُنْتُمْ', 'küntüm', 'cd10_21'), W('نَحْنُ', 'nahnü', 'cd10_22'),
+    W('نَعْبُدُ', 'na\'büdü', 'cd10_23'), W('لَمْ يَلِدْ', 'lem yelid', 'cd10_25'), W('وَلَمْ يَكُنْ', 've lem yekün', 'cd10_26')];
   add({ id: 'cezm2', island: 'cezm', title: 'Cezmli kelimeler', glyph: 'قُلْ', items: CW, review: () => [],
     steps: [{ t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(CW(), 3) }, { t: 'pick', rounds: 6, k: 3 }, { t: 'memory', pairs: 3 }] });
 
-  // 6) Tenvin Şelalesi
-  const TV = ['be', 'te', 'dal', 'ra', 'kaf', 'lam', 'mim', 'nun', 'he'];
-  add({ id: 'tenvin1', island: 'tenvin', title: 'Tenvin ile tanış', glyph: 'بٌ',
-    items: () => TV.map((id) => I.tenvin(id, 'u')), review: () => TV.flatMap((id) => ['u', 'e', 'o'].map((h) => I.tenvin(id, h))),
-    steps: [{ t: 'concept', c: 'tenvin' }, { t: 'read', lines: () => TV.slice(0, 6).map((id) => ['u', 'e', 'o'].map((h) => I.tenvin(id, h))), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
-  const TW = () => [W('اَحَدٌ', 'ehadün'), W('كُفُوًا', 'küfüven'), W('حَسَنٌ', 'hasenün'), W('قَلَمٌ', 'kalemün'), W('وَلَدٌ', 'veledün'), W('جَبَلٌ', 'cebelün'),
-    W('لَهَبٍ', 'lehebin'), W('مَسَدٍ', 'mesedin'), W('رَجُلٌ', 'racülün'), W('عَمَلٌ', 'amelün')];
-  add({ id: 'tenvin2', island: 'tenvin', title: 'Tenvinli kelimeler', glyph: 'اَحَدٌ', items: TW, review: () => [],
-    steps: [{ t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(TW(), 3) }, { t: 'pick', rounds: 6, k: 3 }, { t: 'memory', pairs: 3 }] });
+  // 6) Tenvin Şelalesi — CD ders 20 (iki üstün), 21 (iki esre), 22 (iki ötre)
+  function TV1() {
+    return [W('اَبَدًا', 'ebeden', 'cd20_2'), W('مَثَلًا', 'meselen', 'cd20_3'), W('رَغَدًا', 'rağaden', 'cd20_4'), W('عَلِيمًا', 'alîmen', 'cd20_6'),
+      W('رَحِيمًا', 'rahîmen', 'cd20_7'), W('كَبِيرًا', 'kebîran', 'cd20_8'), W('دِينًا', 'dînen', 'cd20_9'), W('نُورًا', 'nûran', 'cd20_10'),
+      W('نَارًا', 'nâran', 'cd20_11'), W('كِتَابًا', 'kitâben', 'cd20_15'), W('قَلِيلًا', 'kalîlen', 'cd20_16'), W('كُفُوًا', 'küfüven', 'cd20_18')];
+  }
+  function TV2() {
+    return [W('حَسَدٍ', 'hasedin', 'cd21_1'), W('اَحَدٍ', 'ehadin', 'cd21_2'), W('لَهَبٍ', 'lehebin', 'cd21_4'), W('بَيْتٍ', 'beytin', 'cd21_8'),
+      W('نُورٍ', 'nûrin', 'cd21_9'), W('عَلِيمٍ', 'alîmin', 'cd21_14'), W('شَدِيدٍ', 'şedîdin', 'cd21_15'),
+      W('اَحَدٌ', 'ehadün', 'cd22_1'), W('رُسُلٌ', 'rusülün', 'cd22_3'), W('عَذَابٌ', 'azâbün', 'cd22_5'), W('كِتَابٌ', 'kitâbün', 'cd22_6'),
+      W('قَدِيرٌ', 'kadîrun', 'cd22_8'), W('رَحِيمٌ', 'rahîmün', 'cd22_9'), W('خَيْرٌ', 'hayrun', 'cd22_26')];
+  }
+  add({ id: 'tenvin1', island: 'tenvin', title: 'İki üstün', glyph: 'اَبَدًا', items: TV1, review: () => [],
+    steps: [{ t: 'concept', c: 'tenvin' }, { t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(TV1(), 3), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
+  add({ id: 'tenvin2', island: 'tenvin', title: 'İki esre, iki ötre', glyph: 'اَحَدٌ', items: TV2, review: () => [],
+    steps: [{ t: 'concept', c: 'tenvin2' }, { t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(TV2(), 3) }, { t: 'pick', rounds: 6, k: 3 }, { t: 'memory', pairs: 3 }] });
 
-  // 7) Şedde Tepesi
+  // 7) Şedde Tepesi — harf satırları CD ders 17, kelimeler CD ders 18
   const SD = ['be', 'te', 'dal', 'ra', 'sin', 'sad', 'lam', 'mim', 'nun', 'kaf'];
   add({ id: 'sedde1', island: 'sedde', title: 'Şedde ile tanış', glyph: 'اَبَّ',
-    items: () => SD.map((id) => I.shadda(id)), review: () => [],
-    steps: [{ t: 'concept', c: 'sedde' }, { t: 'read', lines: () => chunk(SD.map((id) => I.shadda(id)), 3), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
-  const SW = () => [W('رَبِّ', 'rabbi'), W('اِنَّ', 'inne'), W('ثُمَّ', 'sümme'), W('تَبَّ', 'tebbe'), W('مَدَّ', 'medde'), W('حَقَّ', 'hakka'), W('عَمَّ', 'amme'), W('شَدَّ', 'şedde'), W('كُلُّ', 'küllü')];
-  add({ id: 'sedde2', island: 'sedde', title: 'Şeddeli kelimeler', glyph: 'رَبِّ', items: SW, review: () => [],
+    items: () => SD.map((id) => I.shadda(id)), review: () => SD.flatMap((id) => ['u', 'e', 'o'].map((h) => I.shadda(id, h))),
+    steps: [{ t: 'concept', c: 'sedde' }, { t: 'read', lines: () => SD.slice(0, 6).map((id) => ['u', 'e', 'o'].map((h) => I.shadda(id, h))), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
+  const SW = () => [W('اِنَّ', 'inne', 'cd18_5'), W('ثُمَّ', 'sümme', 'cd18_6'), W('تَبَّ', 'tebbe', 'cd18_3'), W('لَعَلَّ', 'le\'alle', 'cd18_8'),
+    W('نَزَّلَ', 'nezzele', 'cd18_10'), W('عَلَّمَ', 'allema', 'cd18_11'), W('كَذَّبَ', 'kezzebe', 'cd18_12'), W('اِنَّكَ', 'inneke', 'cd18_17'),
+    W('اِيَّاكَ', 'iyyâke', 'cd18_18'), W('اَلَّذِي', 'ellezî', 'cd18_19'), W('فَلَمَّا', 'felemmâ', 'cd18_21'), W('اِنَّمَا', 'innemâ', 'cd18_23'),
+    W('رَبِّهِمْ', 'rabbihim', 'cd18_25'), W('اِلَّا', 'illâ', 'cd18_27'), W('اَيُّهَا', 'eyyühâ', 'cd18_28')];
+  add({ id: 'sedde2', island: 'sedde', title: 'Şeddeli kelimeler', glyph: 'اِنَّ', items: SW, review: () => [],
     steps: [{ t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(SW(), 3) }, { t: 'pick', rounds: 6, k: 3 }, { t: 'memory', pairs: 3 }] });
 
-  // 8) Uzatma Bahçesi
+  // 8) Uzatma Bahçesi — harf satırları CD ders 12, kelimeler CD ders 13-15, çeker ders 23
   const MD = ['be', 'te', 'kaf', 'lam', 'mim', 'nun', 'sin', 'ra'];
   add({ id: 'med1', island: 'med', title: 'Med harfleri', glyph: 'بَا',
     items: () => MD.map((id) => I.med(id, 'u')), review: () => MD.flatMap((id) => ['u', 'e', 'o'].map((h) => I.med(id, h))),
     steps: [{ t: 'concept', c: 'med' }, { t: 'read', lines: () => MD.slice(0, 6).map((id) => ['u', 'e', 'o'].map((h) => I.med(id, h))), chant: true }, { t: 'pick', rounds: 6, k: 3 }, { t: 'balloons', targets: 5 }] });
-  const MW = () => [W('قَالَ', 'kâle'), W('قِيلَ', 'kîle'), W('يَقُولُ', 'yekûlü'), W('نُورٌ', 'nûrun'), W('دِينٌ', 'dînün'), W('كِتَابٌ', 'kitâbün'),
-    W('نَارٌ', 'nârun'), W('رَسُولٌ', 'rasûlün'), W('هٰذَا', 'hâzâ'), W('ذٰلِكَ', 'zâlike')];
+  function MW() { return [W('قَالَ', 'kâle', 'cd13_7'), W('كَانَ', 'kâne', 'cd13_8'), W('زَادَ', 'zâde', 'cd13_9'), W('اَرَادَ', 'erâde', 'cd13_11'),
+    W('يَكَادُ', 'yekâdü', 'cd13_15'), W('مَالِكِ', 'mâliki', 'cd13_18'), W('عَلَيْنَا', 'aleynâ', 'cd13_22'), W('اِهْدِنَا', 'ihdinâ', 'cd13_23'),
+    W('فِي', 'fî', 'cd14_3'), W('دِينِ', 'dîni', 'cd14_7'), W('عَالَمِينَ', 'âlemîne', 'cd14_21'), W('كَافِرِينَ', 'kâfirîne', 'cd14_24'),
+    W('يَقُولُونَ', 'yekûlûne', 'cd15_13'), W('يَعْلَمُونَ', 'ya\'lemûne', 'cd15_15'), W('كَافِرُونَ', 'kâfirûne', 'cd15_22')]; }
   add({ id: 'med2', island: 'med', title: 'Uzatmalı kelimeler', glyph: 'قَالَ', items: MW, review: () => [],
-    steps: [{ t: 'concept', c: 'ceker' }, { t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(MW(), 3) }, { t: 'pick', rounds: 6, k: 3 }] });
+    steps: [{ t: 'concept', c: 'medk' }, { t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(MW(), 3) }, { t: 'pick', rounds: 6, k: 3 }, { t: 'memory', pairs: 3 }] });
+  const KW = () => [W('هٰذَا', 'hâzâ', 'cd23_16'), W('ذٰلِكَ', 'zâlike', 'cd23_6'), W('اٰدَمَ', 'âdeme', 'cd23_2'), W('لٰكِنْ', 'lâkin', 'cd23_9'),
+    W('اِلٰهٌ', 'ilâhün', 'cd23_7'), W('اٰيَاتٌ', 'âyâtün', 'cd23_15'), W('قُرْاٰنٌ', 'kur\'ânün', 'cd23_18'), W('اٰتَيْنَا', 'âteynâ', 'cd23_19')];
+  add({ id: 'med3', island: 'med', title: 'Çekerli kelimeler', glyph: 'هٰذَا', items: KW, review: () => [],
+    steps: [{ t: 'concept', c: 'ceker' }, { t: 'intro', mode: 'word', max: 6 }, { t: 'read', lines: () => chunk(KW(), 3) }, { t: 'pick', rounds: 6, k: 3 }] });
 
   // 9) Kur'an Kelimeleri (gerçek kâri sesleriyle)
   add({ id: 'kelime1', island: 'kelime', title: 'Fâtiha kelimeleri 1', glyph: 'اَلْحَمْدُ',

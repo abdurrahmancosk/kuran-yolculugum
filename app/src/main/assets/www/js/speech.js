@@ -10,20 +10,24 @@ window.K = window.K || {};
     alive(g) { return g === gen; },
     setCoach(c) { coach = c; },
 
-    /** Türkçe anlatım (balonda da gösterilir). */
+    /** Türkçe anlatım: balonda gösterilir; sesi yalnız insan kaydıdır (ebeveyn kaydı → gömülü kayıt).
+        Kaydı olmayan cümlede opts.item verilmişse o öğenin (harf/hece/kelime) insan sesi çalınır, yoksa sessiz geçilir. */
     async say(text, opts = {}) {
       if (typeof text === 'function') text = text();
       const g = gen;
       if (coach && opts.bubble !== false) coach.show(opts.show || text);
       if (coach) coach.talking(true);
-      const rate = (K.Store.s.settings.rate || 0.95) * (opts.rate || 1);
-      const r = await K.N.speak(text, 'tr', { rate });
+      const rate = (K.Store.s.settings.rate || 1) * (opts.rate || 1);
+      let r = await K.N.speak(text, 'tr', { rate, hv: opts.hv });
       if (coach && g === gen) coach.talking(false);
-      if (r === 'nospeech' && g === gen) await K.UI.sleep(Math.min(2500, 600 + text.length * 35));
+      if (r === 'nospeech' && g === gen) {
+        if (opts.item) { r = await S.item(opts.item, { warn: false }); }
+        else await K.UI.sleep(Math.min(1600, 450 + text.length * 18));
+      }
       return g === gen ? r : 'stop';
     },
 
-    /** Bir öğeyi seslendirir: kayıtlı hoca sesi → gerçek kâri sesi → Arapça/Türkçe TTS. */
+    /** Bir öğenin insan sesi: ebeveyn/hoca kaydı → Diyanet CD kaydı → Kur'an kelime kaydı. */
     async item(it, opts = {}) {
       if (!it) return;
       const g = gen;
@@ -32,7 +36,13 @@ window.K = window.K || {};
         const r = await K.N.play('rec:' + it.key);
         if (r === 'end' || r === 'stop' || g !== gen) return r;
       }
-      if (opts.spell && it.spell) return S.say(it.spell, { bubble: opts.bubble });
+      const hv = it.hv || it.key;
+      if (K.N.hvHas(hv)) {
+        if (coach) coach.talking(true);
+        const r = await K.N.play([K.N.hvUrl(hv)], { speed: st.speed || 1 });
+        if (coach) coach.talking(false);
+        return r;
+      }
       if (it.audio) {
         if (coach) coach.talking(true);
         const r = await K.N.play(it.audio, { speed: st.speed || 1, onLoading: opts.onLoading });
@@ -41,10 +51,10 @@ window.K = window.K || {};
         if (opts.warn !== false) K.UI.toast('Ses için internet bağlantısı gerekiyor 🌐');
         return 'error';
       }
-      if (it.kind === 'letter' || it.kind === 'form') return K.N.speak(it.say, 'tr', { rate: (st.rate || 0.95) * 0.9 });
-      if (st.sylMode === 'ar' && it.sayAr && K.N.ttsLangOk('ar')) return K.N.speak(it.sayAr, 'ar', { rate: 0.7 });
-      return K.N.speak(it.say, 'tr', { rate: (st.rate || 0.95) * 0.85 });
+      return 'nosound';
     },
+    /** Öğenin insan sesi var mı? */
+    hasSound(it) { return !!it && (K.N.hvHas(it.hv || it.key) || !!it.audio || (K.Store.s.settings.useRec && it.key && K.N.recHas(it.key))); },
 
     /** Bir âyeti seslendirir (hoca kaydı → seçili kâri). */
     async ayah(s, a, opts = {}) {
@@ -66,13 +76,22 @@ window.K = window.K || {};
       return K.N.play(K.Q.basmalaUrls(s, opts.reciter), { speed: st.speed || 1 });
     },
 
+    /** Tebrik: çizgi filmden insan sesi tebrik kayıtları (K.HV_PRAISE); yoksa yalnız balon. */
     praise() {
       const n = K.Store.s.profile.name;
-      const list = ['Aferin!', 'Harikasın!', 'Maşallah!', 'Çok güzel!', 'Süpersin!', 'Bravo!', 'Tebrikler!', 'Çok iyi!'];
-      const p = K.UI.pick(list);
-      return S.say(p, { rate: 1.05, show: n && Math.random() < 0.4 ? p.replace('!', ' ' + n + '!') : p });
+      const list = (K.HV_PRAISE || []).filter((k) => K.N.hvHas(k));
+      if (list.length && Math.random() < 0.6) {
+        const k = K.UI.pick(list);
+        return S.say(K.HV_TEXT[k], { hv: k });
+      }
+      const p = K.UI.pick(['Aferin!', 'Harikasın!', 'Maşallah!', 'Çok güzel!', 'Süpersin!', 'Bravo!', 'Tebrikler!']);
+      return S.say(p, { show: n && Math.random() < 0.4 ? p.replace('!', ' ' + n + '!') : p });
     },
-    tryAgain() { return S.say(K.UI.pick(['Hımm, bir daha dinle.', 'Olsun, tekrar deneyelim.', 'Az kaldı! Bir daha dene.', 'Tekrar bakalım.']), { rate: 1.05 }); },
+    tryAgain(it) {
+      const list = (K.HV_AGAIN || []).filter((k) => K.N.hvHas(k));
+      if (list.length) { const k = K.UI.pick(list); return S.say(K.HV_TEXT[k], { hv: k }); }
+      return S.say(K.UI.pick(['Bir daha dinle.', 'Olsun, tekrar deneyelim.', 'Az kaldı! Bir daha dene.']), { item: it });
+    },
   };
 
   /** Maskot + konuşma balonu bileşeni. */

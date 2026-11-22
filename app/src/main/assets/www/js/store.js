@@ -6,8 +6,7 @@ window.K = window.K || {};
     v: 1,
     profile: { name: '', avatar: '🦁' },
     settings: {
-      rate: 0.95,          // konuşma hızı
-      sylMode: 'tr',       // hece seslendirme: 'tr' (kurs usulü) | 'ar' (Arapça TTS)
+      rate: 1,             // anlatım kaydı çalma hızı
       otre: 'ü',           // ince harflerde ötre: 'ü' | 'u'
       reciter: 'danis',      // Türk hafız İshak Danış
       speed: 1,            // tilavet hızı
@@ -32,6 +31,7 @@ window.K = window.K || {};
     hiddenVideos: [],
     diploma: false,
     unlockedAt: 0,
+    missed: {},            // insan sesi kaydı olmayan cümleler → kaç kez geçti (ebeveyn kaydı için)
   });
 
   function merge(base, saved) {
@@ -48,6 +48,9 @@ window.K = window.K || {};
 
   // göç: Türk hafız varsayılanına geç (bir kez)
   if (!s.recMigrated2) { if (s.settings.reciter === 'husary_m') s.settings.reciter = 'danis'; s.recMigrated2 = true; }
+
+  // göç (1.4.0): yapay ses kaldırıldı; anlatım kayıtları normal hızda çalar
+  if (!s.hvMigrated) { s.settings.rate = 1; delete s.settings.sylMode; s.hvMigrated = true; }
 
   let saveTimer = null;
   const Store = {
@@ -89,4 +92,10 @@ window.K = window.K || {};
     },
   };
   K.Store = Store;
+  // Kaydı olmayan cümleleri say (Ebeveyn Paneli → Ses Kayıt Stüdyosu → Anlatım)
+  K.onMiss = (text) => {
+    const m = s.missed || (s.missed = {});
+    if (!(text in m) && Object.keys(m).length >= 400) return;
+    m[text] = (m[text] || 0) + 1; Store.save();
+  };
 })();

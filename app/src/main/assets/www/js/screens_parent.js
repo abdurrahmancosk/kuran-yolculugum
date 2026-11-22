@@ -41,6 +41,20 @@ window.K = window.K || {};
     return h('div', { class: 'rec-row' }, h('div', { class: 'ar', style: ar.length > 12 ? { fontSize: '22px', maxWidth: '45%', textAlign: 'right' } : null }, ar), h('div', { class: 'rl' }, label, sub ? h('small', null, sub) : null), status, recB, playB, delB);
   }
 
+  /** Kaydı olmayan anlatım cümleleri: uygulamada karşılaşılanlar (sıklığa göre) + temel yönergeler. */
+  function phraseList() {
+    const base = ['Aferin!', 'Harikasın!', 'Maşallah!', 'Çok güzel!', 'Tebrikler!', 'Bir daha dinle.', 'Olsun, tekrar deneyelim.', 'Az kaldı! Bir daha dene.',
+      'Dinle ve doğru olanı bul!', 'Hangisi?', 'Önce dinle, sonra sen oku!', 'Şimdi sen oku!', 'Aynı kartları bul!', 'Bu kelimeyi heceleyelim.', 'Hepsi birlikte:',
+      'Haydi sen de oku!', 'Şimdi noktalarını da boya!', 'Şimdi noktasını da boya!', 'Bu sesi taşıyan balonları patlat!', 'Harfe doğru harekeyi giydir! Dinle:'];
+    const missed = K.Store.s.missed || {};
+    const seen = new Set();
+    const out = [];
+    Object.entries(missed).sort((a, b) => b[1] - a[1]).map(([t]) => t).concat(base).forEach((t) => {
+      if (seen.has(t) || K.N.hvFor(t)) return; seen.add(t); out.push(t);
+    });
+    return out.slice(0, 200);
+  }
+
   function studio() {
     const s = K.Store.s;
     const { I, hareke, LETTERS } = K.L;
@@ -50,12 +64,12 @@ window.K = window.K || {};
       ['Esre', () => hareke.map((L) => I.syl(L, 'e'))],
       ['Ötre', () => hareke.map((L) => I.syl(L, 'o'))],
       ['Cezm', () => hareke.flatMap((L) => ['u', 'e', 'o'].map((hh) => I.cezm(L, hh)))],
-      ['Tenvin', () => hareke.flatMap((L) => ['u', 'e', 'o'].map((hh) => I.tenvin(L, hh)))],
-      ['Şedde', () => hareke.filter((L) => L.id !== 'elif').map((L) => I.shadda(L))],
+      ['Şedde', () => hareke.filter((L) => L.id !== 'elif').flatMap((L) => ['u', 'e', 'o'].map((hh) => I.shadda(L, hh)))],
       ['Med', () => hareke.filter((L) => L.id !== 'elif').flatMap((L) => ['u', 'e', 'o'].map((hh) => I.med(L, hh)))],
       ['Kelimeler', () => K.C.LEVELS.filter((l) => ['hece', 'cezm', 'tenvin', 'sedde', 'med'].includes(l.island)).flatMap((l) => l.items()).filter((x) => x.kind === 'word')],
       ['Dualar', null],
       ['Sûreler', null],
+      ['Anlatım', null],
     ];
     let cur = 0, surahN = 1;
     const tabs = h('div', { class: 'cat-tabs' });
@@ -68,6 +82,9 @@ window.K = window.K || {};
       if (fn) {
         const seen = new Set();
         fn().forEach((it) => { if (seen.has(it.key)) return; seen.add(it.key); body.append(recRow(it.key, it.ar, it.label || '', it.spell || '', () => S.item(it))); });
+      } else if (name === 'Anlatım') {
+        body.append(h('p', { class: 'help' }, 'İnsan sesi kaydı olmayan cümleler (çocuğunuzun en sık karşılaştıkları üstte). Kaydettiğiniz cümle, uygulamada geçtiği her yerde sizin sesinizle çalar.'));
+        phraseList().forEach((t) => body.append(recRow(K.N.sayKey(t), '🗣️', t, '', null)));
       } else if (name === 'Dualar') {
         K.NZ.DUAS.forEach((d) => body.append(recRow('dua_' + d.id, K.NamazUI.duaText(d).split(' ').slice(0, 3).join(' ') + '…', d.title, d.lat.slice(0, 40) + '…', () => K.NamazUI.playDua(d))));
       } else {
@@ -83,7 +100,7 @@ window.K = window.K || {};
     const nameIn = h('input', { type: 'text', value: s.settings.teacherName || '' });
     nameIn.addEventListener('change', () => { s.settings.teacherName = nameIn.value.trim() || 'Hoca'; K.Store.save(); });
     return card('🎙️ Ses Kayıt Stüdyosu',
-      h('p', { class: 'help' }, 'Musa Coşkun Hoca\'nın (veya sizin) sesinizle harfleri, heceleri, kelimeleri, duaları ve sûre âyetlerini kaydedin. Kayıtlar uygulamanın her yerinde öncelikli olarak çalınır — kurstaki öğretmenin okuyuşuyla birebir uyum sağlar.'),
+      h('p', { class: 'help' }, 'Musa Coşkun Hoca\'nın (veya sizin) sesinizle harfleri, heceleri, kelimeleri, duaları, sûre âyetlerini ve anlatım cümlelerini kaydedin. Kayıtlar uygulamanın her yerinde öncelikli olarak çalınır.'),
       field('Kayıt sahibinin adı', nameIn, 'Sûre ekranında bu adla görünür'),
       field('Kayıtlı sesleri öncelikle kullan', switchCtl(s.settings, 'useRec')),
       tabs, body);
@@ -262,34 +279,15 @@ window.K = window.K || {};
 
   function soundCard() {
     const s = K.Store.s;
-    const st = h('div', { class: 'help', style: { fontWeight: 700 } });
-    const refresh = () => {
-      const i = K.N.ttsInfo();
-      if (!K.N.isAndroid) { st.textContent = 'Tarayıcı modu: sesler tarayıcının konuşma motoruyla çalışır.'; return; }
-      const tr = K.N.ttsLangOk('tr'), ar = K.N.ttsLangOk('ar');
-      st.innerHTML = '';
-      st.append(`Türkçe ses: ${tr ? '✔️ hazır' : '❌ yok'} · Arapça ses: ${ar ? '✔️ hazır' : '❌ yok (isteğe bağlı)'}`, i.engine ? h('small', { style: { display: 'block' } }, 'Motor: ' + i.engine) : '');
-    };
-    refresh();
-    const rate = h('input', { type: 'range', min: 0.6, max: 1.3, step: 0.05, value: s.settings.rate });
-    rate.addEventListener('change', () => { s.settings.rate = +rate.value; K.Store.save(); S.say('Ses hızı böyle olacak.'); });
-    // yedek (telefon) sesi seçimi
-    const voices = K.N.ttsVoices('tr');
-    const vSel = h('select', null, h('option', { value: '' }, 'Otomatik (erkek sesi tercih edilir)'), voices.map((v, i) => h('option', { value: v.name }, `Ses ${i + 1}${v.net ? ' (internet)' : ''}${v.ok ? '' : ' – yüklü değil'}`)));
-    vSel.value = K.N.ttsGetVoice('tr') || '';
-    vSel.addEventListener('change', () => { K.N.ttsSetVoice('tr', vSel.value); setTimeout(() => K.N.speakDevice('Merhaba, ben Hüdhüd. Sesim böyle olacak.', 'tr'), 400); });
+    const n = K.HV ? K.HV.size : 0;
     return card('🔊 Ses ve Okunuş',
-      h('p', { class: 'help' }, 'Uygulamadaki anlatımlar, önceden kaydedilmiş doğal bir erkek sesiyle uygulamanın içinde hazır gelir (internet gerekmez). Telefonun kendi konuşma motoru yalnızca listede olmayan nadir cümleler için yedek olarak kullanılır.'),
-      st,
-      voices.length ? field('Yedek ses (telefonun sesi)', h('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } }, vSel, btn('▶', 'blue small', () => K.N.speakDevice('Merhaba, ben Hüdhüd. Sesim böyle olacak.', 'tr'))), 'Erkek sesi olanı seçin') : null,
-      h('div', { class: 'action-row', style: { justifyContent: 'flex-start' } },
-        btn('🔈 Sesi test et', 'blue small', () => { S.say('Esselâmü aleyküm! Ben Hüdhüd.'); setTimeout(refresh, 1500); }),
-        btn('⚙️ Ses ayarları', 'white small', () => K.N.openTtsSettings()),
-        btn('⬇️ Ses paketi yükle', 'white small', () => K.N.installTtsData()),
-        btn('🔄 Yenile', 'white small', () => { K.N.ttsReinit(); setTimeout(refresh, 2000); })),
-      field('Konuşma hızı', rate),
-      field('Hece seslendirme', selectCtl(s.settings, 'sylMode', [['tr', 'Kurs usulü (be, bi, bü)'], ['ar', 'Arapça ses motoru']]), 'Arapça seçilirse, Arapça ses paketi gerekir'),
-      field('Ötre okunuşu (ince harflerde)', selectCtl(s.settings, 'otre', [['ü', 'ü (bü, tü)'], ['u', 'u (bu, tu)']]), 'Kurstaki öğretmenin okuttuğu gibi seçin'),
+      h('p', { class: 'help' }, `Uygulamada yapay ses (bilgisayar sesi) kullanılmaz. Bütün sesler gerçek insan kayıtlarıdır ve ${n} kayıt uygulamanın içinde hazır gelir (internet gerekmez):`),
+      h('ul', { class: 'help', style: { margin: '4px 0 8px 18px' } },
+        h('li', null, 'Harf adları, harekeli/cezimli/şeddeli/uzatmalı heceler, ders kelimeleri, kural anlatımları ve namaz duaları: Diyanet İşleri Başkanlığı Elif-Ba CD\'si (hocanın kendi sesi).'),
+        h('li', null, 'Abdest ve namazın kılınışı anlatımı: "Namaz Hocası" sesli dersleri.'),
+        h('li', null, 'Kur\'an âyetleri: Türk hafız İshak Danış (ilk dinlemede indirilir).')),
+      h('p', { class: 'help' }, 'Kaydı bulunmayan kısa yönergeler (ör. "Hangisi?") konuşma balonunda yazılı görünür ve harfin/hecenin kendi sesi çalınır. İsterseniz bu cümleleri aşağıdaki Ses Kayıt Stüdyosu → "Anlatım" sekmesinden kendi sesinizle kaydedebilirsiniz.'),
+      field('Ötre okunuşu (ince harflerde)', selectCtl(s.settings, 'otre', [['ü', 'ü (bü, tü)'], ['u', 'u (bu, tu)']]), 'Yazılı okunuşlar kurstaki öğretmenin okuttuğu gibi gösterilir'),
       field('Kur\'an yazımı', selectCtl(s.settings, 'script', [['tr', 'Türkiye mushafı usulü'], ['std', 'Standart (Tanzil)']]), 'Türkiye usulü: hemzesiz elif, "Allah" lafzında çeker'),
       field('Tilavet hızı', selectCtl(s.settings, 'speed', [[0.75, 'Yavaş'], [1, 'Normal']])),
       field('Efekt sesleri', switchCtl(s.settings, 'sfx')),
@@ -315,7 +313,7 @@ window.K = window.K || {};
           field('Günlük sınır', selectCtl(s.settings, 'dailyLimit', [[0, 'Sınırsız'], [10, '10 dakika'], [15, '15 dakika'], [20, '20 dakika'], [30, '30 dakika'], [45, '45 dakika'], [60, '1 saat']])),
           field('Bugün kullanılan', h('b', null, fmtMin(K.Store.todaySecs())))),
         card('📚 Kaynaklar',
-          h('p', { class: 'help' }, 'Müfredat: Diyanet İşleri Başkanlığı Kur\'an kursu Elif-Ba sırası (harfler, şekiller, harekeler, cezm, tenvin, şedde, med). Kur\'an metni: Tanzil projesi (değiştirilmeden; Türkiye usulü yazım yalnızca gösterim ayarıdır). Meal: Diyanet İşleri Başkanlığı. Tilavet: varsayılan Türk hafız İshak Danış "Âyet Âyet Kur\'an-ı Kerim" (İHL öğrencilerine eğitim amaçlı, archive.org; her âyet konuşma tanıma ile doğrulandı), ayrıca everyayah.com ve islamic.network kâri kayıtları; namaz duaları: archive.org "Namaz Sûreleri ve Duaları" hafız kaydı; kelime sesleri: quran.com. Namaz kılınışı: Diyanet İlmihali. Videolar: YouTube (Musa Coşkun Hoca tilavetleri, Diyanet Çocuk). Yazı tipleri: Scheherazade New, Amiri Quran, Baloo 2 (SIL OFL).'),
+          h('p', { class: 'help' }, 'Müfredat: Diyanet İşleri Başkanlığı Kur\'an kursu Elif-Ba sırası. Sesler (hepsi gerçek insan sesi, yapay ses yok): Diyanet İşleri Başkanlığı "Elif-Ba\'sı" CD-ROM\'u (harfler, heceler, ders kelimeleri, kural anlatımları, namaz duaları; archive.org: elif-ba-cd-diyanet), "Namaz Hocası" sesli dersleri (abdest ve namaz anlatımı; archive.org: namazhocasimp3). Kur\'an metni: Tanzil projesi (değiştirilmeden). Meal: Diyanet İşleri Başkanlığı. Tilavet: Türk hafız İshak Danış "Âyet Âyet Kur\'an-ı Kerim" (archive.org; her âyet konuşma tanıma ile doğrulandı), yedek olarak everyayah.com ve islamic.network kâri kayıtları; kelime sesleri: quran.com. Namaz kılınışı: Diyanet İlmihali. Videolar: YouTube (Musa Coşkun Hoca tilavetleri, Diyanet Çocuk). Yazı tipleri: Scheherazade New, Amiri Quran, Baloo 2 (SIL OFL).'),
           h('p', { class: 'help' }, 'Sürüm ' + K.N.version())),
         card('⚠️ Sıfırla', h('p', { class: 'help' }, 'Tüm ilerleme, yıldız ve çıkartmalar silinir. Ayarlar ve ses kayıtları korunur.'),
           btn('İlerlemeyi sıfırla', 'red small', async () => { if (await K.UI.confirm('Emin misiniz?', 'Tüm ilerleme silinecek.', 'Sıfırla')) { K.Store.reset(); toast('Sıfırlandı'); R.home(); } }))));

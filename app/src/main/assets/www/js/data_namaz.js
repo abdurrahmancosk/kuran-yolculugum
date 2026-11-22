@@ -53,8 +53,14 @@ window.K = window.K || {};
     besmele: () => K.Q.ayahUrls(1, 1, 'danis'),
   };
   DUAS.forEach((d) => { if (AUD[d.id]) d.audio = AUD[d.id]; });
+  // Diyanet İşleri Başkanlığı Elif-Ba CD'sindeki gömülü insan sesi kayıtları (öncelikli, internetsiz)
+  const HVD = { tekbir: ['du_tekbir'], subhaneke: ['du_subhaneke'], euzu: ['du_euzu'], besmele: ['du_besmele'], ruku: ['du_ruku'],
+    semiallah: ['du_semiallah', 'du_rabbenalek'], secde: ['du_secde'], tahiyyat: ['du_tahiyyat'], salli: ['du_salli'], barik: ['du_barik'],
+    rabbena1: ['du_rabbena1'], rabbena2: ['du_rabbena2'], selam: ['du_selam'], sehadet: ['du_sehadet'] };
+  DUAS.forEach((d) => { if (HVD[d.id]) d.hv = HVD[d.id]; });
   const DUA = {}; DUAS.forEach((d) => { DUA[d.id] = d; });
 
+  // Anlatım sesi: "Namaz Hocası" sesli dersi (insan sesi); text alanı kayıtta söylenenin aynısıdır (K.HV_TEXT).
   const ABDEST = [
     { icon: '🤲', title: 'Niyet ve Besmele', text: 'Abdest almaya niyet ederiz ve Bismillâhirrahmânirrahîm deriz.', dua: 'besmele' },
     { icon: '👐', title: 'Ellerimizi yıkarız', text: 'Ellerimizi bileklerimizle birlikte üç kere yıkarız. Parmak aralarını ovalarız, yüzük varsa oynatırız.', count: 3 },
@@ -70,6 +76,8 @@ window.K = window.K || {};
     { icon: '🦶', flip: true, title: 'Sol ayağımızı yıkarız', text: 'Sol ayağımızı da parmak uçlarından başlayarak topuğumuzla birlikte üç kere yıkarız.', count: 3 },
     { icon: '☝️', title: 'Kelime-i şehâdet', text: 'Abdestimizi bitirince kıbleye dönüp Kelime-i şehâdet getiririz. Artık namaz kılmaya hazırız!', dua: 'sehadet' },
   ];
+
+  ABDEST.forEach((st, i) => { st.hv = 'nh_ab' + i; if (K.HV_TEXT && K.HV_TEXT[st.hv]) { st.kid = st.text; st.text = K.HV_TEXT[st.hv]; } });
 
   // pose: tekbir | kiyam | ruku | kavme | secde | kade | selamR | selamL | niyet
   const NAMAZ = [
@@ -107,11 +115,41 @@ window.K = window.K || {};
   const ORDER_GAME = ['tekbir', 'kiyam', 'ruku', 'kavme', 'secde', 'kade'];
   const POSE_NAMES = { niyet: 'Niyet', tekbir: 'Tekbir', kiyam: 'Kıyam', ruku: 'Rükû', kavme: 'Kavme', secde: 'Secde', kade: 'Oturuş', selamR: 'Sağa selam', selamL: 'Sola selam' };
 
-  /** Adımın cinsiyete göre tam anlatımı. */
+  // Namaz Hocası sesli dersinden cümleler (insan sesi). Cinsiyete göre farklı olan cümleler ayrı kayıttır.
+  const NHV = [
+    { a: ['nh_n_kible', 'nh_n_niyet'] },
+    { m: ['nh_n_tekbir', 'nh_n_tekbir_m', 'nh_n_avuc'], f: ['nh_n_tekbir', 'nh_n_tekbir_f', 'nh_n_avuc'] },
+    { m: ['nh_n_bag_m', 'nh_n_subhaneke'], f: ['nh_n_bag_f', 'nh_n_subhaneke'] },
+    { a: ['nh_n_fatiha'] },
+    { a: [] },
+    { a: ['nh_n_sure'] },
+    { m: ['nh_n_ruku', 'nh_n_ruku_m', 'nh_n_goz', 'nh_n_ruku3'], f: ['nh_n_ruku', 'nh_n_ruku_f', 'nh_n_goz', 'nh_n_ruku3'] },
+    { a: ['nh_n_kavme', 'nh_n_kavme2'] },
+    { a: ['nh_n_secde'], note: true },
+    { a: ['nh_n_celse'], note: true },
+    { a: ['nh_n_secde2'] },
+    { a: ['nh_n_kalk', 'nh_n_rekat2'] },
+    { a: ['nh_n_otur', 'nh_n_tahiyyat'], note: true },
+    { a: ['nh_n_selam', 'nh_n_selam2'] },
+    { a: ['nh_n_son'] },
+  ];
+  NAMAZ.forEach((st, i) => { st.nh = NHV[i]; });
+  const gender = () => (K.Store && K.Store.s.settings.namazGender) || 'm';
+
+  /** Adımın sesli anlatım kayıtları (cinsiyete göre). */
+  function stepHv(st) {
+    const v = st.nh || {};
+    return (v.a || v[gender()] || []).filter((k) => K.HV_TEXT && K.HV_TEXT[k]);
+  }
+  /** Adımın anlatımı: kayıtta söylenenler; kayıt yoksa yazılı metin. */
   function stepText(st) {
-    const g = (K.Store && K.Store.s.settings.namazGender) || 'm';
+    const hv = stepHv(st);
+    if (hv.length) return hv.map((k) => K.HV_TEXT[k]).join(' ');
+    const g = gender();
     return st.text + (st[g] ? ' ' + st[g] : '');
   }
+  /** Kayıtta geçmeyen, cinsiyete özgü ek bilgi (yalnız yazılı gösterilir). */
+  function stepNote(st) { return st.nh && st.nh.note ? st[gender()] || '' : ''; }
 
-  K.NZ = { stepText, DUAS, DUA, ABDEST, NAMAZ, VAKITLER, ORDER_GAME, POSE_NAMES };
+  K.NZ = { stepText, stepHv, stepNote, DUAS, DUA, ABDEST, NAMAZ, VAKITLER, ORDER_GAME, POSE_NAMES };
 })();

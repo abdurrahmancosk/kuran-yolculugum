@@ -21,29 +21,30 @@ window.K = window.K || {};
 
   function duaText(d) { return d.words ? d.words.map((w) => K.Q.text(w)).join(' ') : d.ar; }
 
-  /** Duayı seslendirir: hoca kaydı → Kur'an sesi (âyetse) → Arapça TTS → Türkçe okunuş. */
+  /** Duayı seslendirir (yalnız insan sesi): ebeveyn/hoca kaydı → Diyanet Elif-Ba CD'si kaydı (gömülü) → hafız kaydı (internet). */
   async function playDua(d, opts = {}) {
     const g = S.gen;
     const key = 'dua_' + d.id;
     if (K.Store.s.settings.useRec && K.N.recHas(key)) return K.N.play('rec:' + key);
+    const hv = (d.hv || []).filter(K.N.hvHas);
+    if (hv.length) {
+      for (const k of hv) { const r = await K.N.play([K.N.hvUrl(k)]); if (r !== 'end' || g !== S.gen) return r; await sleep(250); }
+      return 'end';
+    }
     if (d.audio) { const r = await K.N.play(d.audio()); if (r !== 'error' || g !== S.gen) return r; }
     if (d.basmala) { const r = await S.ayah(1, 1); if (r !== 'error') return r; }
     else if (d.words && d.from === 1) { const r = await S.ayah(d.s, d.a); if (r !== 'error') return r; }
     else if (d.words) {
-      let ok = true;
       for (let i = 0; i < d.words.length; i++) {
         if (g !== S.gen) return 'stop';
         opts.onWord && opts.onWord(i);
         const r = await K.N.play(K.Q.wordUrls(d.s, d.a, d.words[i].i));
-        if (r === 'error') { ok = false; break; }
+        if (r === 'error') break;
         if (r === 'stop') return 'stop';
       }
       opts.onWord && opts.onWord(-1);
-      if (ok) return 'end';
     }
-    if (g !== S.gen) return 'stop';
-    // Arapça yapay ses kullanılmaz: Türk okuyuşuyla (kursta öğretildiği gibi) erkek sesiyle okunur.
-    return K.N.speak(d.lat, 'tr', { rate: 0.85 });
+    return g !== S.gen ? 'stop' : 'error';
   }
   async function playSurahFull(n) {
     const g = S.gen;
@@ -93,12 +94,12 @@ window.K = window.K || {};
       stage.innerHTML = '';
       stage.append(card, h('div', { class: 'action-row' }, prev, iconBtn('🔊', () => narrate(), 'sm'), d ? btn('🤲 Dinle', 'purple', () => playDua(d)) : null, next));
       narrate();
-      async function narrate() { coach.show(st.title + ' 🔊'); await S.say(st.title + '. ' + st.text, { bubble: false }); if (d) { await sleep(200); await playDua(d); } next.classList.add('pulse'); }
+      async function narrate() { coach.show(st.title + ' 🔊'); await S.say(st.text, { bubble: false, hv: st.hv }); if (d) { await sleep(200); await playDua(d); } next.classList.add('pulse'); }
     }
     function finish() {
       K.Store.s.namaz.abdest = true; const fresh = K.Store.addSticker(K.C.EXTRA_STICKERS.abdest); K.Store.save(true);
       K.UI.confetti(140); K.Sfx.tada(); coach.happy();
-      S.say('Maşallah! Abdestini aldın. Artık namaz kılmaya hazırsın!' + (fresh ? ' Su damlası çıkartması kazandın!' : '')).then(() => R.back());
+      S.praise().then(() => R.back());
     }
     return { el, onEnter() { render(); } };
   };
@@ -119,7 +120,7 @@ window.K = window.K || {};
       const more = (st.more || []).map((id) => NZ.DUA[id]);
       const sayEls = [];
       const parts = [h('div', { class: 'sub', style: { fontWeight: 800, color: 'var(--ink2)' } }, `${i + 1} / ${NZ.NAMAZ.length} · ${NZ.POSE_NAMES[st.pose] || ''}`),
-        (() => { const v = K.UI.stepVisual(`nz_${K.Store.s.settings.namazGender}_${i}`, K.Fig.poseSvg(st.pose)); v.classList.add('pop-in'); return v; })(), h('h3', null, st.title), h('p', null, K.NZ.stepText(st))];
+        (() => { const v = K.UI.stepVisual(`nz_${K.Store.s.settings.namazGender}_${i}`, K.Fig.poseSvg(st.pose)); v.classList.add('pop-in'); return v; })(), h('h3', null, st.title), h('p', null, K.NZ.stepText(st)), K.NZ.stepNote(st) ? h('p', { class: 'help', style: { fontWeight: 700 } }, '👉 ' + K.NZ.stepNote(st)) : null];
       [d, st.dua2 ? NZ.DUA[st.dua2] : null, ...more].filter(Boolean).forEach((dd) => {
         const se = h('div', { class: 'say' }, duaText(dd));
         sayEls.push(se);
@@ -151,7 +152,7 @@ window.K = window.K || {};
       }
       async function narrate(goOn) {
         const g = S.gen;
-        coach.show(st.title + ' 🔊'); await S.say(st.title + '. ' + K.NZ.stepText(st), { bubble: false }); if (g !== S.gen) return;
+        coach.show(st.title + ' 🔊'); const hv = K.NZ.stepHv(st); if (hv.length) await S.say(K.NZ.stepText(st), { bubble: false, hv }); else await sleep(500); if (g !== S.gen) return;
         if (goOn && (d || st.surah)) { await sleep(250); if (!(await playAll())) return; }
         next.classList.add('pulse');
         if (goOn && auto && g === S.gen) { await sleep(1200); if (g === S.gen && auto) { if (i < NZ.NAMAZ.length - 1) { i++; render(); } else finish(); } }
@@ -160,7 +161,7 @@ window.K = window.K || {};
     function finish() {
       K.Store.s.namaz.steps = true; const fresh = K.Store.addSticker(K.C.EXTRA_STICKERS.namaz); K.Store.save(true);
       K.UI.confetti(160); K.Sfx.tada(); coach.happy();
-      S.say('Maşallah! Namazı baştan sona öğrendin. Allah kabul etsin!' + (fresh ? ' Yeni bir çıkartma kazandın!' : ''));
+      S.say(K.HV_TEXT.pr_namaz || 'Aferin sana. Namaz kılmayı çabuk öğrenmişsin.', { hv: 'pr_namaz' });
       stage.innerHTML = ''; foot.innerHTML = '';
       stage.append(h('div', { class: 'celebrate' }, K.Mascot.el('happy'), h('h2', null, 'Allah kabul etsin!'), h('p', null, 'Namazın bütün adımlarını öğrendin.'),
         h('div', { class: 'action-row' }, btn('🔁 Baştan', 'orange', () => { i = 0; render(); }), btn('🧩 Sırala oyunu', 'green', () => R.go(Screens.namazOrder, {}, { replace: true })))));
@@ -176,12 +177,11 @@ window.K = window.K || {};
       return h('div', { class: 'dua-card' }, h('h3', null, d.title), arEl, h('div', { class: 'lat' }, d.lat), h('div', { class: 'mean' }, '📘 ' + d.mean),
         h('div', { class: 'action-row', style: { justifyContent: 'flex-start' } },
           btn('▶️ Dinle', 'blue small', () => { S.cancelAll(); arEl.style.background = '#FFF3B0'; playDua(d).then(() => { arEl.style.background = ''; }); }),
-          btn('🗣️ Okunuşu', 'white small', () => { S.cancelAll(); K.N.speak(d.lat, 'tr', { rate: 0.85 }); }),
           btn('📘 Anlamı', 'white small', () => { S.cancelAll(); S.say(d.mean, { bubble: false }); }),
           mic));
     }));
     const el = h('div', { class: 'screen namaz' }, topbar('Namaz Duaları', { sub: 'Dinle, tekrar et, ezberle' }), h('div', { class: 'scroll' },
-      h('div', { class: 'note' }, 'İpucu: Ebeveyn Paneli → Ses Kayıt Stüdyosu\'ndan dualar hocamızın sesiyle kaydedilirse burada o ses çalar.'), list));
+      h('div', { class: 'note' }, 'Dualar Diyanet İşleri Başkanlığı Elif-Ba CD\'sindeki hocanın sesiyle, internetsiz çalar. Ebeveyn Paneli → Ses Kayıt Stüdyosu\'ndan kendi kaydınızı da ekleyebilirsiniz.'), list));
     return { el, onEnter() { K.Speech.setCoach(null); S.say('Namazda okuduğumuz dualar burada. Dinle düğmesine bas!'); } };
   };
 

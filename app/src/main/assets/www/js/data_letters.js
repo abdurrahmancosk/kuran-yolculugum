@@ -81,12 +81,13 @@ window.K = window.K || {};
       return { kind: 'syl', key: `C_${L.id}_${h}`, ar, label: v + L.c, say: v + sayC(L), sayAr: ar, lid: L.id, h,
         spell: `Elif ${HNAME[h]} ${L.name} cezm, ${v + sayC(L)}` };
     },
-    shadda(L) {
+    /** Şedde (Diyanet Elif-Ba usulü): elif + hareke, ardından şeddeli harf üstün: اَبَّ (ebbe), اِبَّ (ibbe), اُبَّ (übbe). */
+    shadda(L, h = 'u') {
       if (typeof L === 'string') L = BY[L];
-      const v = vowel(L, 'u');
-      const ar = 'ا' + M.FATHA + L.ar + M.SHADDA + M.FATHA;
-      return { kind: 'syl', key: `D_${L.id}`, ar, label: v + L.c + '-' + L.c + v, say: v + sayC(L) + sayC(L) + v, sayAr: ar, lid: L.id,
-        spell: `${L.name} şeddeli, ${v + sayC(L) + sayC(L) + v}` };
+      const v0 = vowel(L, h), v1 = vowel(L, 'u');
+      const ar = 'ا' + HMARK[h] + L.ar + M.SHADDA + M.FATHA;
+      return { kind: 'syl', key: h === 'u' ? `D_${L.id}_u` : `D_${L.id}_${h}`, ar, label: v0 + L.c + '-' + L.c + v1, say: v0 + sayC(L) + sayC(L) + v1, sayAr: ar, lid: L.id, h,
+        spell: `Elif ${HNAME[h]} ${L.name} şeddeli, ${v0 + sayC(L) + sayC(L) + v1}` };
     },
     med(L, h) {
       if (typeof L === 'string') L = BY[L];
@@ -100,6 +101,7 @@ window.K = window.K || {};
     word(ar, tr, opts = {}) {
       const say = opts.say || tr.replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u').replace(/[-'’]/g, '');
       const it = { kind: 'word', key: 'W_' + simpleKey(ar), ar, label: tr, say, sayAr: ar };
+      if (opts.hv) it.hv = opts.hv;   // Diyanet Elif-Ba CD kaydı (insan sesi)
       if (opts.sylls) it.sylls = splitSyllables(ar);
       return it;
     },
