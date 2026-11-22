@@ -1,7 +1,7 @@
 {
- "versionCode": 4,
- "versionName": "1.3.0",
- "apk": "https://raw.githubusercontent.com/abdurrahmancosk/kuran-yolculugum/guncelleme/KuranYolculugum-1.3.0.apk",
- "sha256": "1a35a800d4d52445f9ad1486db8df5c623194ca6f125dcc2fce8e9943fe34a74",
- "notes": "Sûreler artık Türk hafız İshak Danış'ın âyet âyet öğretici okuyuşuyla (her âyet Kur'an metnine göre doğrulandı). Namaz duaları (Sübhâneke, Ettehiyyâtü, Salli, Bârik, Rabbenâ, Eûzü-Besmele, Kelime-i şehâdet) gerçek hafız sesiyle; yapay Arapça ses kaldırıldı."
+ "versionCode": 5,
+ "versionName": "1.4.0",
+ "apk": "https://raw.githubusercontent.com/abdurrahmancosk/kuran-yolculugum/guncelleme/KuranYolculugum-1.4.0.apk",
+ "sha256": "156f423f5cc90010332ce4ebabb6cfcee00d69550a225b3f4a1ecc6dc14e0609",
+ "notes": "Yapay ses tamamen kaldırıldı; bütün sesler gerçek insan kaydı. Harfler, heceler (üstün-esre-ötre, cezm, şedde, med), ders kelimeleri, kural anlatımları ve namaz duaları Diyanet İşleri Başkanlığı Elif-Ba CD'sindeki hocanın sesiyle (internetsiz). Abdest ve namaz adımları \"Namaz Hocası\" sesli dersiyle, kadın/erkek farkları ayrı. Hece, cezm, tenvin, şedde ve med dersleri Diyanet Elif-Ba kelimeleriyle yenilendi; yeni \"Çekerli kelimeler\" dersi. Kaydı olmayan cümleleri Ebeveyn Paneli → Ses Kayıt Stüdyosu → \"Anlatım\" sekmesinden kendi sesinizle kaydedebilirsiniz."
 }
