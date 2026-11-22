@@ -1,0 +1,16 @@
+# Derleme çıktıları
+build/
+app/build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+*.zip
+local.properties
+.idea/
+*.iml
+# İmza anahtarı ve şifreleri ASLA depoya konmaz (GitHub Secrets'ta saklanır)
+keystore/
+*.jks
+*.keystore
+signing.properties
