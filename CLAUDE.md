@@ -6,7 +6,9 @@
 - **Her güncellemeden sonra değişiklikleri `main` dalına commit edip `origin`e (github.com/abdurrahmancosk/kuran-yolculugum) gönder.**
 - Telefondaki uygulama kendini her gün günceller; bunun için **yayınlanacak her sürümde** `app/build.gradle.kts` içindeki
   `versionCode` (+1) ve `versionName` artırılmalı, `RELEASE_NOTES.txt` kısa Türkçe notla güncellenmelidir.
-  `main`e gönderim → GitHub Actions (`.github/workflows/release.yml`) APK'yı derler, imzalar, Release + `update.json` yayınlar.
+  Yayın kanalı deponun `guncelleme` dalıdır (APK + `update.json`); telefondaki uygulama her gün
+  `raw.githubusercontent.com/abdurrahmancosk/kuran-yolculugum/guncelleme/update.json` dosyasını denetler.
+  Yayınlamak için: `./tools/publish.sh` (yerel anahtarla) — ya da GitHub Actions secrets tanımlıysa `main`e gönderim yeterlidir.
 - Arayüz, anlatım ve notlar Türkçe; içerik Diyanet Kur'an kursu Elif-Ba sırasına ve Diyanet İlmihali'ne (Hanefî) uygun olmalı.
 
 ## İmza anahtarı

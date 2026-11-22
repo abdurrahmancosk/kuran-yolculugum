@@ -28,7 +28,11 @@ import java.util.concurrent.TimeUnit
  */
 object UpdateManager {
     const val REPO = "abdurrahmancosk/kuran-yolculugum"
-    const val UPDATE_JSON = "https://github.com/$REPO/releases/latest/download/update.json"
+    /** Güncelleme kaynakları: depodaki "guncelleme" dalı (birincil) ve GitHub Releases (yedek). En yüksek sürüm seçilir. */
+    val UPDATE_SOURCES = listOf(
+        "https://raw.githubusercontent.com/$REPO/guncelleme/update.json",
+        "https://github.com/$REPO/releases/latest/download/update.json",
+    )
     const val JOB_ID = 7101
     const val ACTION_INSTALL_STATUS = "com.kuranyolculugu.app.INSTALL_STATUS"
     private const val CHANNEL = "updates"
@@ -112,11 +116,16 @@ object UpdateManager {
     }
 
     fun fetchInfo(): Info? {
-        val txt = try { httpGet(UPDATE_JSON + "?t=" + System.currentTimeMillis()) } catch (e: Exception) { null } ?: return null
-        return try {
-            val o = JSONObject(txt)
-            Info(o.getLong("versionCode"), o.optString("versionName"), o.getString("apk"), o.optString("sha256"), o.optString("notes"))
-        } catch (e: Exception) { null }
+        var best: Info? = null
+        for (src in UPDATE_SOURCES) {
+            val txt = try { httpGet(src + "?t=" + System.currentTimeMillis()) } catch (e: Exception) { null } ?: continue
+            val info = try {
+                val o = JSONObject(txt)
+                Info(o.getLong("versionCode"), o.optString("versionName"), o.getString("apk"), o.optString("sha256"), o.optString("notes"))
+            } catch (e: Exception) { null } ?: continue
+            if (best == null || info.versionCode > best.versionCode) best = info
+        }
+        return best
     }
 
     private fun updateDir(ctx: Context) = File(ctx.filesDir, "update")

@@ -1,0 +1,7 @@
+{
+ "versionCode": 2,
+ "versionName": "1.1.0",
+ "apk": "https://github.com/abdurrahmancosk/kuran-yolculugum/releases/download/v1.1.0/KuranYolculugum.apk",
+ "sha256": "d61e1c013066c4661c87c7eb5f6eb33e962636700c6a35698f3da37da505457e",
+ "notes": "Otomatik güncelleme eklendi: uygulama her gün yeni sürümü denetleyip kendiliğinden kurar. Ebeveyn Paneli'ne \"Otomatik Güncelleme\" bölümü eklendi."
+}

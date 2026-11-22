@@ -4,7 +4,7 @@
 **sıfırdan Kur'an-ı Kerim okumayı** öğreten Android uygulaması. Rehber karakter: **Hüdhüd kuşu**.
 
 ## Kurulum (telefon/tablet)
-1. `KuranYolculugum.apk` dosyasını [son sürüm sayfasından](https://github.com/abdurrahmancosk/kuran-yolculugum/releases/latest) telefona indirin.
+1. Son sürüm APK'sını [güncelleme dalından](https://github.com/abdurrahmancosk/kuran-yolculugum/tree/guncelleme) telefona indirin.
 2. Dosyaya dokunun; Android "bilinmeyen kaynaklardan yükleme" izni isterse bu kaynağa izin verin.
 3. Uygulama açılınca ebeveyn için kısa kurulum gelir: çocuğun adı ve kursta hangi aşamada olduğu.
 4. Sesli anlatım için telefonda **Google Konuşma Hizmetleri** ve **Türkçe** ses paketi kurulu olmalıdır
@@ -49,13 +49,14 @@ okuma şeridi (dinle → kendi sesini kaydet → karşılaştır), sûre okuma.
   güncellemeyi kuramaz.
 
 ## Otomatik güncelleme ve yayın
-- Telefondaki uygulama her gün `releases/latest/download/update.json` dosyasını denetler; yeni sürümü indirir,
+- Telefondaki uygulama her gün deponun `guncelleme` dalındaki `update.json` dosyasını denetler; yeni sürümü indirir,
   SHA-256 ile doğrular ve uygulama kapatıldığında kurar (Android 12+: ilk onaydan sonra sessiz kurulum).
 - Yeni sürüm yayınlamak için `app/build.gradle.kts` içinde `versionCode`/`versionName` artırılır,
   `RELEASE_NOTES.txt` güncellenir ve `main`e gönderilir.
-- `main`e her gönderimde `.github/workflows/release.yml` APK'yı derleyip imzalar ve Release oluşturur.
+- Yayın: `./tools/publish.sh` APK'yı derleyip imzalar ve `guncelleme` dalına gönderir.
+- `main`e her gönderimde `.github/workflows/release.yml` aynı yayını GitHub Actions'ta yapar.
   Bunun için deponun **Settings → Secrets and variables → Actions** bölümünde bir kez şu gizli değişkenler
   tanımlanmalıdır: `KEYSTORE_BASE64` (anahtar dosyasının base64 hâli), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
-  Tanımlı değilse iş akışı yayını atlar; sürüm `tools/publish.sh` ile yerelden de yayınlanabilir.
+  Tanımlı değilse iş akışı yayını atlar.
 - Kur'an verisini yeniden üretmek: `python3 tools/gen_surahs.py <veri_klasörü> app/src/main/assets/www/js/data_surahs.js`
 - Tarayıcıda deneme: `cd app/src/main/assets/www && python3 -m http.server` → `http://localhost:8000`
