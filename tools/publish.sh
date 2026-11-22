@@ -28,8 +28,8 @@ fi
 ./gradlew assembleRelease --no-daemon -q
 cp app/build/outputs/apk/release/app-release.apk "$WT/$APK"
 export SHA=$(sha256sum "$WT/$APK" | cut -d' ' -f1)
-(cd "$WT" && find . -maxdepth 1 -name 'KuranYolculugum-*.apk' ! -name "$APK" -delete && python3 "$ROOT/tools/make_update_json.py" \
-  && cp "$ROOT/RELEASE_NOTES.txt" . \
+(cd "$WT" && find . -maxdepth 1 -name 'KuranYolculugum-*.apk' ! -name "$APK" -delete && cp "$ROOT/RELEASE_NOTES.txt" . \
+  && python3 "$ROOT/tools/make_update_json.py" \
   && printf '# Kur\x27an Yolculuğum — güncelleme kanalı\n\nSon sürüm: **%s** — [APK indir](%s)\n\nBu dal uygulamanın otomatik güncellemesi için kullanılır; elle değiştirmeyin.\n' "$NAME" "$APK" > README.md \
   && git add -A && git commit -qm "Sürüm $NAME ($CODE)" && git -c push.negotiate=true push -q origin "$BRANCH")
 git worktree remove --force "$WT"

@@ -44,18 +44,18 @@ window.K = window.K || {};
 
   const ABDEST = [
     { icon: '🤲', title: 'Niyet ve Besmele', text: 'Abdest almaya niyet ederiz ve Bismillâhirrahmânirrahîm deriz.', dua: 'besmele' },
-    { icon: '👐', title: 'Ellerimizi yıkarız', text: 'Ellerimizi bileklerimizle birlikte üç kere yıkarız. Parmak aralarını da unutmayız.', count: 3 },
-    { icon: '👄', title: 'Ağzımıza su veririz', text: 'Sağ elimizle ağzımıza üç kere su verip çalkalarız.', count: 3 },
-    { icon: '👃', title: 'Burnumuza su çekeriz', text: 'Sağ elimizle burnumuza üç kere su çeker, sol elimizle temizleriz.', count: 3 },
-    { icon: '😊', title: 'Yüzümüzü yıkarız', text: 'Alnımızdan çenemizin altına, bir kulaktan diğer kulağa kadar yüzümüzü üç kere yıkarız.', count: 3 },
-    { icon: '💪', title: 'Sağ kolumuzu yıkarız', text: 'Sağ kolumuzu dirseğimizle birlikte üç kere yıkarız.', count: 3 },
+    { icon: '👐', title: 'Ellerimizi yıkarız', text: 'Ellerimizi bileklerimizle birlikte üç kere yıkarız. Parmak aralarını ovalarız, yüzük varsa oynatırız.', count: 3 },
+    { icon: '👄', title: 'Ağzımıza su veririz', text: 'Sağ avucumuzla ağzımıza üç kere su verip her seferinde iyice çalkalarız.', count: 3 },
+    { icon: '👃', title: 'Burnumuza su çekeriz', text: 'Sağ avucumuzla burnumuza üç kere su çeker, sol elimizle burnumuzu temizleriz.', count: 3 },
+    { icon: '😊', title: 'Yüzümüzü yıkarız', text: 'Saçlarımızın bittiği yerden çenemizin altına, bir kulak yumuşağından diğerine kadar yüzümüzü üç kere yıkarız.', count: 3 },
+    { icon: '💪', title: 'Sağ kolumuzu yıkarız', text: 'Sağ kolumuzu dirseğimizle birlikte üç kere yıkarız. Kuru yer kalmaması için iyice ovalarız.', count: 3 },
     { icon: '💪', flip: true, title: 'Sol kolumuzu yıkarız', text: 'Sol kolumuzu da dirseğimizle birlikte üç kere yıkarız.', count: 3 },
-    { icon: '🙆', title: 'Başımızı mesh ederiz', text: 'Islak elimizi başımızın üzerine sürerek mesh ederiz.' },
-    { icon: '👂', title: 'Kulaklarımızı mesh ederiz', text: 'Serçe parmaklarımızla kulaklarımızın içini, başparmaklarımızla arkasını mesh ederiz.' },
-    { icon: '🙇', title: 'Boynumuzu mesh ederiz', text: 'Ellerimizin dışıyla boynumuzu mesh ederiz.' },
-    { icon: '🦶', title: 'Sağ ayağımızı yıkarız', text: 'Sağ ayağımızı topuklarımızla birlikte üç kere yıkarız. Parmak aralarını da temizleriz.', count: 3 },
-    { icon: '🦶', flip: true, title: 'Sol ayağımızı yıkarız', text: 'Sol ayağımızı da topuklarımızla birlikte üç kere yıkarız.', count: 3 },
-    { icon: '☝️', title: 'Kelime-i şehâdet', text: 'Abdestimizi bitirince Kelime-i şehâdet getiririz. Artık namaz kılmaya hazırız!', dua: 'sehadet' },
+    { icon: '🙆', title: 'Başımızı mesh ederiz', text: 'Ellerimizi yeniden ıslatırız. Sağ elimizin içini başımızın üzerine koyarak mesh ederiz.' },
+    { icon: '👂', title: 'Kulaklarımızı mesh ederiz', text: 'Şehadet parmaklarımızla kulaklarımızın içini, başparmaklarımızla kulaklarımızın arkasını mesh ederiz.' },
+    { icon: '🙇', title: 'Boynumuzu mesh ederiz', text: 'Ellerimizi yeniden ıslatmadan, parmaklarımızın dış yüzüyle boynumuzu mesh ederiz.' },
+    { icon: '🦶', title: 'Sağ ayağımızı yıkarız', text: 'Sağ ayağımızı parmak uçlarından başlayarak topuğumuzla birlikte üç kere yıkarız. Parmak aralarını sol elimizin serçe parmağıyla temizleriz.', count: 3 },
+    { icon: '🦶', flip: true, title: 'Sol ayağımızı yıkarız', text: 'Sol ayağımızı da parmak uçlarından başlayarak topuğumuzla birlikte üç kere yıkarız.', count: 3 },
+    { icon: '☝️', title: 'Kelime-i şehâdet', text: 'Abdestimizi bitirince kıbleye dönüp Kelime-i şehâdet getiririz. Artık namaz kılmaya hazırız!', dua: 'sehadet' },
   ];
 
   // pose: tekbir | kiyam | ruku | kavme | secde | kade | selamR | selamL | niyet

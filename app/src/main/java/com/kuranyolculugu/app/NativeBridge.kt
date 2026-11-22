@@ -90,14 +90,42 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
         if (voiceCache.containsKey(key)) return voiceCache[key]
         val t = tts ?: return null
         val v = try {
-            t.voices?.filter {
+            val all = t.voices?.filter {
                 it.locale.language == loc.language &&
                     !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)
-            }?.sortedWith(compareBy<Voice>({ it.isNetworkConnectionRequired }, { -it.quality }))?.firstOrNull()
+            } ?: emptyList()
+            val chosen = prefs.getString("voice_$key", null)
+            all.firstOrNull { it.name == chosen }
+                // ebeveyn seçmediyse adında "male" geçen (erkek) sesi tercih et
+                ?: all.filter { it.name.lowercase().contains("male") && !it.name.lowercase().contains("female") }.minByOrNull { if (it.isNetworkConnectionRequired) 1 else 0 }
+                ?: all.sortedWith(compareBy<Voice>({ it.isNetworkConnectionRequired }, { -it.quality })).firstOrNull()
         } catch (e: Exception) { null }
         voiceCache[key] = v
         return v
     }
+
+    @JavascriptInterface
+    fun ttsVoices(lang: String): String {
+        val a = JSONArray()
+        val loc = localeFor(lang)
+        try {
+            tts?.voices?.filter { it.locale.language == loc.language }?.sortedBy { it.name }?.forEach {
+                a.put(JSONObject().put("name", it.name).put("net", it.isNetworkConnectionRequired)
+                    .put("ok", !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)))
+            }
+        } catch (_: Exception) {}
+        return a.toString()
+    }
+
+    @JavascriptInterface
+    fun ttsSetVoice(lang: String, name: String) {
+        val key = localeFor(lang).language
+        prefs.edit().putString("voice_$key", name).apply()
+        main.post { voiceCache.remove(key) }
+    }
+
+    @JavascriptInterface
+    fun ttsGetVoice(lang: String): String = prefs.getString("voice_" + localeFor(lang).language, "") ?: ""
 
     private fun langState(loc: Locale): String {
         val t = tts ?: return "none"
@@ -463,6 +491,25 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
         return a.toString()
     }
 
+    // ---------------------------------------------------------------- kullanıcı fotoğrafları
+    private val imgDir = File(ctx.filesDir, "userimg").apply { mkdirs() }
+
+    @JavascriptInterface
+    fun saveUserImage(key: String, base64: String): Boolean = try {
+        val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+        File(imgDir, safeKey(key) + ".jpg").writeBytes(bytes); true
+    } catch (e: Exception) { false }
+
+    @JavascriptInterface
+    fun deleteUserImage(key: String) { File(imgDir, safeKey(key) + ".jpg").delete() }
+
+    @JavascriptInterface
+    fun userImageList(): String {
+        val a = JSONArray()
+        imgDir.listFiles()?.filter { it.name.endsWith(".jpg") }?.forEach { a.put(it.name.removeSuffix(".jpg")) }
+        return a.toString()
+    }
+
     // ---------------------------------------------------------------- kalıcı durum
     @JavascriptInterface
     fun saveState(json: String) {
@@ -515,6 +562,12 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
             try { activity.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) {}
         }
     }
+
+    @JavascriptInterface
+    fun openInApp(url: String, title: String) { main.post { activity.openInApp(url, title) } }
+
+    @JavascriptInterface
+    fun setLandscape(on: Boolean) { main.post { activity.setLandscape(on) } }
 
     @JavascriptInterface
     fun appVersion(): String = try {

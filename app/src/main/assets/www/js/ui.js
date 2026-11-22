@@ -183,28 +183,141 @@ window.K = window.K || {};
     });
   }
 
-  // ------------------------------------------------------------ video
+  // ------------------------------------------------------------ video (uygulama içi, öneri göstermeyen oynatıcı)
+  let ytReady = null;
+  function loadYT() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (ytReady) return ytReady;
+    ytReady = new Promise((resolve, reject) => {
+      window.onYouTubeIframeAPIReady = () => resolve();
+      const sc = document.createElement('script');
+      sc.src = 'https://www.youtube.com/iframe_api';
+      sc.onerror = () => { ytReady = null; reject(new Error('yt')); };
+      document.head.append(sc);
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { ytReady = null; reject(new Error('timeout')); } }, 15000);
+    });
+    return ytReady;
+  }
+  const fmtT = (t) => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+
   function videoModal(v) {
-    if (v.ext || !v.id) {
-      if (!K.N.isOnline()) { toast('Video için internet bağlantısı gerekiyor.'); return; }
-      K.N.openExternal(v.url);
-      return;
-    }
     if (!K.N.isOnline()) { toast('Video için internet bağlantısı gerekiyor.'); return; }
     K.N.stopAll();
-    const src = `https://www.youtube-nocookie.com/embed/${v.id}?rel=0&modestbranding=1&playsinline=1&fs=1&autoplay=1&hl=tr`;
-    const frame = h('div', { class: 'video-frame' }, h('iframe', { src, allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen', allowfullscreen: true, referrerpolicy: 'strict-origin-when-cross-origin', title: v.title }));
-    const close = modal(h('div', null, h('h2', null, v.title), v.sub ? h('p', { style: { marginTop: '-4px', color: 'var(--ink2)' } }, v.sub) : null, frame,
-      h('div', { class: 'row' },
-        btn('YouTube\'da aç', 'white small', () => { close(); K.N.openExternal('https://www.youtube.com/watch?v=' + v.id); }),
-        btn('Kapat', 'small', () => close()))));
+    if (v.ext || !v.id) { K.N.openInApp(v.url, v.title); return; }
+    const root = document.getElementById('modal-root');
+    const thumb = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+    const host = h('div', { class: 'vp-frame' });
+    const mount = h('div', { id: 'yt-' + Math.random().toString(36).slice(2) });
+    host.append(mount);
+    // YouTube arayüzüne dokunulmasını engelleyen kalkan + kapak (duraklatma/bitişte önerileri gizler)
+    const cover = h('div', { class: 'vp-cover', style: { backgroundImage: `url(${thumb})` } }, h('div', { class: 'vp-big' }, '▶'));
+    const shield = h('div', { class: 'vp-shield' });
+    const msg = h('div', { class: 'vp-msg hidden' });
+    host.append(shield, cover, msg);
+    const playB = btn('▶', 'green small', () => toggle());
+    const back10 = btn('⏪ 10', 'white small', () => seekBy(-10));
+    const fwd10 = btn('10 ⏩', 'white small', () => seekBy(10));
+    const fsB = btn('⛶', 'white small', () => setFull(!full), { 'aria-label': 'Tam ekran' });
+    const bar = h('div', { class: 'vp-bar' }, h('i'));
+    const time = h('span', { class: 'vp-time' }, '0:00 / 0:00');
+    const panel = h('div', { class: 'vp' },
+      h('div', { class: 'vp-top' }, btn('✖ Kapat', 'white small', () => close()), h('div', { class: 'vp-title' }, v.title)),
+      host, bar, h('div', { class: 'vp-ctrl' }, back10, playB, fwd10, time, fsB));
+    root.append(panel);
+    modalStack.push({ close });
+    let player = null, timer = null, full = false, ended = false, dur = 0;
+    function setCover(on, text) {
+      cover.classList.toggle('hidden', !on);
+      cover.querySelector('.vp-big').textContent = text || '▶';
+    }
+    function toggle() {
+      if (!player || !player.getPlayerState) return;
+      const st = player.getPlayerState();
+      if (st === 1) player.pauseVideo();
+      else { if (ended) { player.seekTo(0, true); ended = false; } player.playVideo(); }
+    }
+    function seekBy(d) { if (player && player.getCurrentTime) { const t = player.getCurrentTime() + d; player.seekTo(Math.max(0, Math.min(t, dur - 1)), true); } }
+    function setFull(on) { full = on; panel.classList.toggle('full', on); K.N.setLandscape(on); }
+    function tick() {
+      if (!player || !player.getCurrentTime) return;
+      const t = player.getCurrentTime(); dur = player.getDuration() || dur;
+      bar.firstChild.style.width = (dur ? (t / dur) * 100 : 0) + '%';
+      time.textContent = fmtT(t) + ' / ' + fmtT(dur);
+      // video sonuna gelmeden durdur: YouTube'un bitiş ekranındaki öneriler hiç görünmesin
+      if (dur && t >= dur - 0.6 && player.getPlayerState() === 1) { player.pauseVideo(); ended = true; setCover(true, '🔁'); }
+    }
+    bar.addEventListener('click', (e) => { if (!player || !dur) return; const r = bar.getBoundingClientRect(); player.seekTo(((e.clientX - r.left) / r.width) * dur, true); });
+    shield.addEventListener('click', () => toggle());
+    cover.addEventListener('click', () => toggle());
+    function close() {
+      clearInterval(timer);
+      try { player && player.destroy(); } catch (e) {}
+      if (full) setFull(false);
+      panel.remove();
+      modalStack = modalStack.filter((m) => m.close !== close);
+    }
+    loadYT().then(() => {
+      player = new YT.Player(mount.id, {
+        videoId: v.id, host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%',
+        playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, iv_load_policy: 3, disablekb: 1, fs: 0, playsinline: 1, cc_load_policy: 0, showinfo: 0, origin: location.origin, hl: 'tr' },
+        events: {
+          onReady: () => { player.playVideo(); timer = setInterval(tick, 250); },
+          onStateChange: (e) => {
+            const st = e.data;
+            playB.textContent = st === 1 ? '⏸' : '▶';
+            if (st === 1) { setCover(false); ended = false; }
+            else if (st === 0) { ended = true; setCover(true, '🔁'); }
+            else if (st === 2) setCover(true, '▶');
+          },
+          onError: (e) => {
+            msg.classList.remove('hidden');
+            msg.textContent = (e.data === 101 || e.data === 150 || e.data === 153) ? 'Bu videonun sahibi, videonun başka uygulamalarda oynatılmasına izin vermiyor.' : 'Video açılamadı. İnternet bağlantısını kontrol edin.';
+            setCover(true, '⚠️');
+          },
+        },
+      });
+    }).catch(() => { msg.classList.remove('hidden'); msg.textContent = 'Video oynatıcısı yüklenemedi. İnternet bağlantısını kontrol edin.'; });
   }
   function videoItem(v) {
     const thumb = h('div', { class: 'vthumb', style: v.id ? { backgroundImage: `url(https://i.ytimg.com/vi/${v.id}/mqdefault.jpg)` } : { background: 'linear-gradient(135deg,#1D8A7D,#2BB3A3)' } });
     return h('button', { class: 'video-item', onTap: () => videoModal(v) }, thumb, h('div', null, h('div', { class: 'vtitle' }, v.title), h('div', { class: 'vsub' }, v.sub || (v.ext ? 'Tarayıcıda açılır' : ''))));
   }
 
+  /** Galeriden fotoğraf seçer, en fazla 1000px JPEG'e küçültür. */
+  function pickImage() {
+    return new Promise((resolve) => {
+      const inp = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
+      document.body.append(inp);
+      inp.addEventListener('change', () => {
+        const f = inp.files && inp.files[0];
+        inp.remove();
+        if (!f) return resolve(null);
+        const img = new Image();
+        img.onload = () => {
+          const k = Math.min(1, 1000 / Math.max(img.width, img.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(img.src);
+          resolve(cv.toDataURL('image/jpeg', 0.86));
+        };
+        img.onerror = () => resolve(null);
+        img.src = URL.createObjectURL(f);
+      });
+      inp.click();
+    });
+  }
+  /** Bir adım için kullanıcı fotoğrafı varsa <img>, yoksa çizim döndürür. */
+  function stepVisual(key, svg) {
+    const s = K.Store.s;
+    const stamp = (s.photos || {})[key];
+    if (stamp && K.N.imageList().includes(key)) {
+      return h('img', { class: 'step-photo', src: K.N.imageUrl(key, stamp), alt: '' });
+    }
+    return h('div', { class: 'fig-ill', html: svg });
+  }
+
   function stars(n, max = 3) { return '⭐'.repeat(n) + '☆'.repeat(Math.max(0, max - n)); }
 
-  K.UI = { h, $, sleep, shuffle, pick, btn, iconBtn, R, topbar, modal, closeTopModal, confirm, toast, confetti, parentGate, videoModal, videoItem, stars };
+  K.UI = { pickImage, stepVisual, h, $, sleep, shuffle, pick, btn, iconBtn, R, topbar, modal, closeTopModal, confirm, toast, confetti, parentGate, videoModal, videoItem, stars };
 })();

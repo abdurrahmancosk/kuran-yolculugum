@@ -16,6 +16,15 @@
   `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 - Tüm sürümler aynı anahtarla imzalanmalı; aksi hâlde telefondaki güncelleme kurulamaz.
 
+## Seslendirme (erkek sesi, çevrimdışı)
+- Kullanıcı isteği: anlatımlar **erkek sesi** olmalı ve yapay olduğu belli olmamalı.
+- Tüm cümleler önceden üretilip `assets/www/voice/*.mp3` olarak gömülür; `js/voice_index.js` dizindir.
+  JS `K.N.speak()` önce bu paketi çalar, yoksa telefonun TTS'ine (erkek sesi tercihli) düşer.
+- Yeni/değişen metin eklediğinde: `node tools/collect_voice.js tools/voice_inventory.json` (yerel sunucu açıkken),
+  sonra `python3 tools/gen_voice.py <model_klasörü>` (Piper `tr_TR-fahrettin-medium`, `ar_JO-kareem-medium`;
+  modeller github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models, `pip install "sherpa-onnx<2"`).
+- Konuşulan metne çocuğun adı gibi değişkenler koyma; ad yalnızca balonda gösterilir (`S.say(metin, {show})`).
+
 ## Test
 - Arayüz: `cd app/src/main/assets/www && python3 -m http.server 8765` → Playwright ile ekran görüntüsü.
 - Derleme: `./gradlew assembleRelease` (yerelde `keystore/kuranyolculugu.jks` + `keystore/signing.properties` gerekir).

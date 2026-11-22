@@ -41,7 +41,7 @@ window.K = window.K || {};
       if (ok) return 'end';
     }
     if (g !== S.gen) return 'stop';
-    if (K.N.ttsLangOk('ar') && duaText(d)) return K.N.speak(duaText(d), 'ar', { rate: 0.75 });
+    // Arapça yapay ses kullanılmaz: Türk okuyuşuyla (kursta öğretildiği gibi) erkek sesiyle okunur.
     return K.N.speak(d.lat, 'tr', { rate: 0.85 });
   }
   async function playSurahFull(n) {
@@ -78,7 +78,7 @@ window.K = window.K || {};
     function render() {
       S.cancelAll();
       const st = NZ.ABDEST[i];
-      const ill = h('div', { class: 'fig-ill pop-in', html: K.Fig.abdestSvg(i) });
+      const ill = K.UI.stepVisual(`ab_${K.Store.s.settings.namazGender}_${i}`, K.Fig.abdestSvg(i)); ill.classList.add('pop-in');
       if (st.count) ill.append(h('div', { class: 'drops' }, [18, 48, 78].map((x, k) => h('i', { style: { left: x + '%', animationDelay: (k * 0.4) + 's' } }, '💧'))));
       const d = st.dua ? NZ.DUA[st.dua] : null;
       const card = h('div', { class: 'pose-card' }, h('div', { class: 'sub', style: { fontWeight: 800, color: 'var(--ink2)' } }, `${i + 1} / ${NZ.ABDEST.length}`),
@@ -118,7 +118,7 @@ window.K = window.K || {};
       const more = (st.more || []).map((id) => NZ.DUA[id]);
       const sayEls = [];
       const parts = [h('div', { class: 'sub', style: { fontWeight: 800, color: 'var(--ink2)' } }, `${i + 1} / ${NZ.NAMAZ.length} · ${NZ.POSE_NAMES[st.pose] || ''}`),
-        h('div', { class: 'fig-ill pop-in', html: K.Fig.poseSvg(st.pose) }), h('h3', null, st.title), h('p', null, K.NZ.stepText(st))];
+        (() => { const v = K.UI.stepVisual(`nz_${K.Store.s.settings.namazGender}_${i}`, K.Fig.poseSvg(st.pose)); v.classList.add('pop-in'); return v; })(), h('h3', null, st.title), h('p', null, K.NZ.stepText(st))];
       [d, st.dua2 ? NZ.DUA[st.dua2] : null, ...more].filter(Boolean).forEach((dd) => {
         const se = h('div', { class: 'say' }, duaText(dd));
         sayEls.push(se);

@@ -154,6 +154,42 @@ window.K = window.K || {};
         })));
   }
 
+  function photosCard() {
+    const s = K.Store.s;
+    s.photos = s.photos || {};
+    let g = s.settings.namazGender || 'm';
+    const box = h('div');
+    function render() {
+      box.innerHTML = '';
+      const have = new Set(K.N.imageList());
+      const seg = h('div', { class: 'cat-tabs' }, [['m', '👦 Erkek'], ['f', '👧 Kadın']].map(([v, l]) => h('button', { class: g === v ? 'on' : '', onTap: () => { g = v; render(); } }, l)));
+      box.append(seg);
+      const row = (key, title, svg) => {
+        const thumb = have.has(key) && s.photos[key]
+          ? h('img', { src: K.N.imageUrl(key, s.photos[key]), style: { width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px' } })
+          : h('div', { style: { width: '64px', height: '64px' }, html: svg.replace('<svg ', '<svg width="64" height="64" ') });
+        return h('div', { class: 'rec-row' }, thumb, h('div', { class: 'rl' }, title, h('small', null, have.has(key) ? '📷 Fotoğraf kullanılıyor' : 'Çizim kullanılıyor')),
+          btn('📷', 'blue small', async () => {
+            const data = await K.UI.pickImage();
+            if (!data) return;
+            if (K.N.saveImage(key, data)) { s.photos[key] = Date.now(); K.Store.save(true); toast('Fotoğraf eklendi ✔️'); render(); } else toast('Kaydedilemedi');
+          }, { 'aria-label': 'Fotoğraf seç' }),
+          have.has(key) ? btn('🗑️', 'white small', () => { K.N.deleteImage(key); delete s.photos[key]; K.Store.save(); render(); }, { 'aria-label': 'Sil' }) : null);
+      };
+      box.append(h('div', { style: { fontWeight: 800, margin: '8px 0 2px' } }, '🧎 Namaz adımları'));
+      K.NZ.NAMAZ.forEach((st, i) => box.append(row(`nz_${g}_${i}`, `${i + 1}. ${st.title}`, K.Fig.poseSvg(st.pose, { gender: g }))));
+      box.append(h('div', { style: { fontWeight: 800, margin: '12px 0 2px' } }, '💧 Abdest adımları'));
+      K.NZ.ABDEST.forEach((st, i) => box.append(row(`ab_${g}_${i}`, `${i + 1}. ${st.title}`, K.Fig.abdestSvg(i, g))));
+    }
+    const card0 = card('📷 Gerçek Fotoğraflar',
+      h('p', { class: 'help' }, 'İsterseniz namaz ve abdest adımlarındaki çizimlerin yerine kendi çektiğiniz gerçek fotoğrafları koyabilirsiniz (örneğin Musa Hoca\'nın ya da aile büyüklerinin her duruşu gösterdiği fotoğraflar). Fotoğrafı önce telefonun kamerasıyla çekin, sonra buradan seçin.'),
+      box);
+    // ağır listeyi kart açıldığında çiz
+    const open = btn('Fotoğrafları düzenle', 'white small', () => { open.remove(); render(); });
+    card0.append(open);
+    return card0;
+  }
+
   function updateCard() {
     const box = h('div');
     const RES = { uptodate: '✔️ Güncel', installing: '⏳ Kuruluyor…', ready: '📦 Yeni sürüm indirildi; uygulama kapatılınca kurulacak',
@@ -237,9 +273,15 @@ window.K = window.K || {};
     refresh();
     const rate = h('input', { type: 'range', min: 0.6, max: 1.3, step: 0.05, value: s.settings.rate });
     rate.addEventListener('change', () => { s.settings.rate = +rate.value; K.Store.save(); S.say('Ses hızı böyle olacak.'); });
+    // yedek (telefon) sesi seçimi
+    const voices = K.N.ttsVoices('tr');
+    const vSel = h('select', null, h('option', { value: '' }, 'Otomatik (erkek sesi tercih edilir)'), voices.map((v, i) => h('option', { value: v.name }, `Ses ${i + 1}${v.net ? ' (internet)' : ''}${v.ok ? '' : ' – yüklü değil'}`)));
+    vSel.value = K.N.ttsGetVoice('tr') || '';
+    vSel.addEventListener('change', () => { K.N.ttsSetVoice('tr', vSel.value); setTimeout(() => K.N.speakDevice('Merhaba, ben Hüdhüd. Sesim böyle olacak.', 'tr'), 400); });
     return card('🔊 Ses ve Okunuş',
-      h('p', { class: 'help' }, 'Anlatımlar telefonun metin okuma (TTS) motoruyla Türkçe seslendirilir. Ses gelmiyorsa telefon ayarlarından "Google Konuşma Hizmetleri"ni ve Türkçe ses paketini kurun.'),
+      h('p', { class: 'help' }, 'Uygulamadaki anlatımlar, önceden kaydedilmiş doğal bir erkek sesiyle uygulamanın içinde hazır gelir (internet gerekmez). Telefonun kendi konuşma motoru yalnızca listede olmayan nadir cümleler için yedek olarak kullanılır.'),
       st,
+      voices.length ? field('Yedek ses (telefonun sesi)', h('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } }, vSel, btn('▶', 'blue small', () => K.N.speakDevice('Merhaba, ben Hüdhüd. Sesim böyle olacak.', 'tr'))), 'Erkek sesi olanı seçin') : null,
       h('div', { class: 'action-row', style: { justifyContent: 'flex-start' } },
         btn('🔈 Sesi test et', 'blue small', () => { S.say('Esselâmü aleyküm! Ben Hüdhüd.'); setTimeout(refresh, 1500); }),
         btn('⚙️ Ses ayarları', 'white small', () => K.N.openTtsSettings()),
@@ -264,6 +306,7 @@ window.K = window.K || {};
         report(),
         updateCard(),
         levelCard(),
+        photosCard(),
         soundCard(),
         studio(),
         offline(),

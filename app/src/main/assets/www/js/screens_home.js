@@ -48,9 +48,10 @@ window.K = window.K || {};
         K.Speech.setCoach(coach);
         const first = !s.greetedDay || s.greetedDay !== K.Store.today();
         s.greetedDay = K.Store.today(); K.Store.save();
-        const msg = first ? `Esselâmü aleyküm${name ? ' ' + name : ''}! Ben Hüdhüd. Bugün ne yapmak istersin?` : 'Bugün ne yapmak istersin?';
-        coach.show(msg);
-        setTimeout(() => S.say(msg), 350);
+        const msg = first ? 'Esselâmü aleyküm! Ben Hüdhüd. Bugün ne yapmak istersin?' : 'Bugün ne yapmak istersin?';
+        const shown = first && name ? msg.replace('aleyküm!', `aleyküm ${name}!`) : msg;
+        coach.show(shown);
+        setTimeout(() => S.say(msg, { show: shown }), 350);
         if (!s.onboarded) setTimeout(onboarding, 600);
       },
     };
@@ -170,7 +171,7 @@ window.K = window.K || {};
     }));
     const el = h('div', { class: 'screen', style: { background: 'linear-gradient(180deg,#FFE0EE 0%, var(--bg) 70%)' } },
       topbar('Çıkartmalarım', { sub: `${s.stickers.length} / ${uniq.length}` }), h('div', { class: 'scroll' }, grid));
-    return { el, onEnter() { K.Speech.setCoach(null); S.say(s.stickers.length ? `${s.stickers.length} çıkartman var! Dersleri bitirdikçe yenilerini kazanırsın.` : 'Dersleri bitirdikçe burada çıkartmalar toplayacaksın!'); } };
+    return { el, onEnter() { K.Speech.setCoach(null); S.say(s.stickers.length ? 'Ne güzel çıkartmaların var! Dersleri bitirdikçe yenilerini kazanırsın.' : 'Dersleri bitirdikçe burada çıkartmalar toplayacaksın!'); } };
   };
 
   // ------------------------------------------------------------ hocamızdan dinle
@@ -216,7 +217,7 @@ window.K = window.K || {};
       onEnter() {
         K.Speech.setCoach(null);
         K.UI.confetti(200); K.Sfx.tada();
-        S.say(`Maşallah${s.profile.name ? ' ' + s.profile.name : ''}! Artık Kur'an-ı Kerim okuyabiliyorsun! Bu belge senin. Her gün biraz Kur'an okumayı unutma!`);
+        S.say('Maşallah! Artık Kur\'an-ı Kerim okuyabiliyorsun! Bu belge senin. Her gün biraz Kur\'an okumayı unutma!');
       },
     };
   };

@@ -14,7 +14,7 @@ window.K = window.K || {};
     async say(text, opts = {}) {
       if (typeof text === 'function') text = text();
       const g = gen;
-      if (coach && opts.bubble !== false) coach.show(text);
+      if (coach && opts.bubble !== false) coach.show(opts.show || text);
       if (coach) coach.talking(true);
       const rate = (K.Store.s.settings.rate || 0.95) * (opts.rate || 1);
       const r = await K.N.speak(text, 'tr', { rate });
@@ -38,7 +38,6 @@ window.K = window.K || {};
         const r = await K.N.play(it.audio, { speed: st.speed || 1, onLoading: opts.onLoading });
         if (coach) coach.talking(false);
         if (r === 'end' || r === 'stop' || g !== gen) return r;
-        if (K.N.ttsLangOk('ar')) return K.N.speak(it.sayAr || it.ar, 'ar', { rate: 0.75 });
         if (opts.warn !== false) K.UI.toast('Ses için internet bağlantısı gerekiyor 🌐');
         return 'error';
       }
@@ -62,9 +61,8 @@ window.K = window.K || {};
     praise() {
       const n = K.Store.s.profile.name;
       const list = ['Aferin!', 'Harikasın!', 'Maşallah!', 'Çok güzel!', 'Süpersin!', 'Bravo!', 'Tebrikler!', 'Çok iyi!'];
-      let p = K.UI.pick(list);
-      if (n && Math.random() < 0.35) p = p.replace('!', ' ' + n + '!');
-      return S.say(p, { rate: 1.05 });
+      const p = K.UI.pick(list);
+      return S.say(p, { rate: 1.05, show: n && Math.random() < 0.4 ? p.replace('!', ' ' + n + '!') : p });
     },
     tryAgain() { return S.say(K.UI.pick(['Hımm, bir daha dinle.', 'Olsun, tekrar deneyelim.', 'Az kaldı! Bir daha dene.', 'Tekrar bakalım.']), { rate: 1.05 }); },
   };

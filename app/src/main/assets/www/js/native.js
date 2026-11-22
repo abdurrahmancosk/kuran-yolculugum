@@ -28,12 +28,32 @@ window.K = window.K || {};
   if (!B && 'speechSynthesis' in window) { loadWebVoices(); speechSynthesis.onvoiceschanged = loadWebVoices; }
 
   let currentSpeech = null;
+
+  // ------------------------------------------------------------ gömülü erkek sesi paketi (önceden üretilmiş)
+  function vhash(lang, t) {
+    t = (lang + '|' + String(t)).normalize('NFC').replace(/\s+/g, ' ').trim();
+    let h1 = 0x811c9dc5, h2 = 5381;
+    for (const ch of t) { const c = ch.codePointAt(0); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = (Math.imul(h2, 33) + c) >>> 0; }
+    return h1.toString(36) + h2.toString(36);
+  }
+  function voiceFile(text, lang) {
+    if (!K.VOICE) return null;
+    const h = vhash(lang, text);
+    return K.VOICE.has(h) ? h : null;
+  }
   function estimate(text, rate) { return Math.max(1200, (text.length * 85) / (rate || 1)) + 1500; }
 
   /** Metni seslendirir; bitince çözülür. lang: 'tr' | 'ar' */
   function speak(text, lang = 'tr', opts = {}) {
     stopSpeech();
     const rate = opts.rate || 1, pitch = opts.pitch || 1.05;
+    if (K.onSpeak) K.onSpeak(text, lang);
+    const vf = voiceFile(text, lang);
+    if (vf) {
+      const speed = Math.max(0.7, Math.min(1.3, rate));
+      return play(B ? ['asset:www/voice/' + vf + '.mp3'] : ['voice/' + vf + '.mp3'], { speed }).then((r) => (r === 'end' ? 'done' : r === 'stop' ? 'stop' : 'error'));
+    }
+    if (K.onMiss) K.onMiss(text, lang);
     return new Promise((resolve) => {
       let done = false, off = null, timer = null;
       const finish = (r) => { if (done) return; done = true; if (off) off(); clearTimeout(timer); if (currentSpeech && currentSpeech.id === id) currentSpeech = null; resolve(r); };
@@ -220,10 +240,30 @@ window.K = window.K || {};
   function keepScreenOn(on) { if (B) { try { B.keepScreenOn(!!on); } catch (e) {} } }
   function isOnline() { if (B) { try { return B.isOnline(); } catch (e) {} } return navigator.onLine !== false; }
   function openExternal(url) { if (B) B.openExternal(url); else window.open(url, '_blank'); }
+  function openInApp(url, title) { if (B && B.openInApp) B.openInApp(url, title || ''); else window.open(url, '_blank'); }
+  function setLandscape(on) { if (B && B.setLandscape) B.setLandscape(!!on); }
   function exitApp() { if (B) B.exitApp(); }
+  function ttsVoices(lang) { if (B && B.ttsVoices) { try { return JSON.parse(B.ttsVoices(lang)); } catch (e) {} } return []; }
+  function ttsSetVoice(lang, name) { if (B && B.ttsSetVoice) B.ttsSetVoice(lang, name); }
+  function ttsGetVoice(lang) { if (B && B.ttsGetVoice) { try { return B.ttsGetVoice(lang); } catch (e) {} } return ''; }
+  /** Gömülü paketi atlayıp doğrudan telefonun sesiyle konuşur (ses testi için). */
+  function speakDevice(text, lang) { const v = K.VOICE; K.VOICE = null; const r = speak(text, lang); K.VOICE = v; return r; }
   function openTtsSettings() { if (B) B.openTtsSettings(); }
   function installTtsData() { if (B) B.installTtsData(); }
   function ttsReinit() { if (B) B.ttsReinit(); }
+  // ------------------------------------------------------------ kullanıcı fotoğrafları
+  const webImgs = new Map();
+  function imageList() { if (B && B.userImageList) { try { return JSON.parse(B.userImageList()); } catch (e) {} } return [...webImgs.keys()]; }
+  function saveImage(key, dataUrl) {
+    if (B && B.saveUserImage) return B.saveUserImage(key, dataUrl.split(',')[1]);
+    webImgs.set(key, dataUrl); return true;
+  }
+  function deleteImage(key) { if (B && B.deleteUserImage) B.deleteUserImage(key); webImgs.delete(key); }
+  function imageUrl(key, stamp) {
+    if (B) return `https://appassets.androidplatform.net/userimg/${key}.jpg?v=${stamp || 0}`;
+    return webImgs.get(key) || '';
+  }
+
   // ------------------------------------------------------------ otomatik güncelleme
   function updStatus() { if (B && B.updStatus) { try { return JSON.parse(B.updStatus()); } catch (e) {} } return null; }
   function updCheck() {
@@ -257,8 +297,10 @@ window.K = window.K || {};
     isAndroid: !!B, on, speak, stopSpeech, ttsLangOk, ttsInfo: () => ttsInfo,
     play, stopAudio, stopAll, isCached, prefetch, cacheSize, clearCache,
     micState, ensureMic, recStart, recStop, recLevel, recHas, recDelete, recList,
-    loadState, saveState, vibrate, keepScreenOn, isOnline, openExternal, exitApp,
-    openTtsSettings, installTtsData, ttsReinit, version,
+    vhash, voiceFile,
+    loadState, saveState, vibrate, keepScreenOn, isOnline, openExternal, openInApp, setLandscape, exitApp,
+    openTtsSettings, installTtsData, ttsReinit, version, ttsVoices, ttsSetVoice, ttsGetVoice, speakDevice,
     updStatus, updCheck, updInstall, updSetAuto, openInstallPermission, requestNotif,
+    imageList, saveImage, deleteImage, imageUrl,
   };
 })();
