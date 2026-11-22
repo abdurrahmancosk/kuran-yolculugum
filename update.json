@@ -1,7 +1,7 @@
 {
- "versionCode": 2,
- "versionName": "1.1.0",
- "apk": "https://raw.githubusercontent.com/abdurrahmancosk/kuran-yolculugum/guncelleme/KuranYolculugum-1.1.0.apk",
- "sha256": "d6de2486c5c1df2faf9d1435e9d0937c3d78728367c88c183beb00bc2bd43a45",
- "notes": ""
+ "versionCode": 3,
+ "versionName": "1.2.0",
+ "apk": "https://raw.githubusercontent.com/abdurrahmancosk/kuran-yolculugum/guncelleme/KuranYolculugum-1.2.0.apk",
+ "sha256": "6c8f7d96e06b39e060ec97bfd41a1ce829e39063df622bc9160733c1c5bee240",
+ "notes": "Yenilikler: Tüm anlatımlar artık doğal bir erkek sesiyle (internet gerekmeden). Namaz ve abdest çizimleri gerçek insan oranlarında, erkek ve kadın için ayrı, Diyanet açıklamalarına göre düzeltildi. Harf çizerken noktalar da boyanmadan bölüm bitmiyor. Musa Coşkun Hoca'nın videoları uygulamanın içinde, başka video önerisi göstermeden oynuyor. Ebeveyn Paneli'nden adımlara gerçek fotoğraf eklenebiliyor."
 }
