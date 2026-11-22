@@ -40,6 +40,19 @@ window.K = window.K || {};
       d.words = K.BASMALA.w; d.s = 1; d.a = 1;
     }
   });
+  // Gerçek hafız kayıtları (Türk usulü okuyuş). Konuşma tanıma ile metne göre doğrulandı.
+  const AUD = {
+    subhaneke: () => K.Q.DUA_AUDIO('Subhaneke.mp3'),
+    tahiyyat: () => K.Q.DUA_AUDIO('Ettehiyyatu.mp3'),
+    salli: () => K.Q.DUA_AUDIO('AllahummeSalli.mp3'),
+    barik: () => K.Q.DUA_AUDIO('AllahummeBarik.mp3'),
+    rabbena1: () => K.Q.DUA_AUDIO('RabbenaAtina.mp3'),
+    rabbena2: () => K.Q.ayahUrls(14, 41, 'danis'),
+    sehadet: () => K.Q.DUA_AUDIO('Ettehiyyatu.mp3', '36.2'),
+    euzu: () => K.Q.EUZU_URLS,
+    besmele: () => K.Q.ayahUrls(1, 1, 'danis'),
+  };
+  DUAS.forEach((d) => { if (AUD[d.id]) d.audio = AUD[d.id]; });
   const DUA = {}; DUAS.forEach((d) => { DUA[d.id] = d; });
 
   const ABDEST = [

@@ -121,9 +121,13 @@ window.K = window.K || {};
           let src = urls[i++];
           if (src.startsWith('rec:')) { src = webRecs.get(src.slice(4)); if (!src) return tryNext(); }
           else if (src.startsWith('asset:')) src = src.slice(6).replace(/^www\//, '');
+          const frag = (src.split('#t=')[1] || '').split(',').map(Number);
+          src = src.split('#')[0];
           const a = new Audio(src);
           webAudio = a;
           a.playbackRate = speed;
+          if (frag[0] > 0) a.addEventListener('loadedmetadata', () => { a.currentTime = frag[0]; }, { once: true });
+          if (frag[1] > 0) a.addEventListener('timeupdate', () => { if (a.currentTime >= frag[1]) { a.pause(); finish('end'); } });
           a.onended = () => finish('end');
           a.onerror = () => tryNext();
           a.onplaying = () => opts.onStart && opts.onStart((a.duration || 0) * 1000);

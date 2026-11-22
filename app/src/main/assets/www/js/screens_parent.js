@@ -102,7 +102,7 @@ window.K = window.K || {};
       prog.textContent = r.offline ? 'Bu özellik yalnızca Android uygulamasında çalışır.' : `${label}: ${r.ok} dosya hazır` + (r.fail ? `, ${r.fail} indirilemedi` : ' ✔️');
       info.textContent = 'Önbellek: ' + fmtMB(K.N.cacheSize());
     }
-    const ayahList = () => { const l = [K.Q.ayahUrls(1, 1)]; K.SURAHS.forEach((su) => su.v.forEach((v) => l.push(K.Q.ayahUrls(su.n, v.a)))); Object.values(K.QURAN_EXTRA).forEach((v) => l.push(K.Q.ayahUrls(v.s, v.a))); return l; };
+    const ayahList = () => { const l = [K.Q.ayahUrls(1, 1)]; K.SURAHS.forEach((su) => { if (su.n !== 1) l.push(K.Q.basmalaUrls(su.n)); }); K.NZ.DUAS.forEach((d) => { if (d.audio) l.push(d.audio().map((u) => u.split('#')[0])); }); K.SURAHS.forEach((su) => su.v.forEach((v) => l.push(K.Q.ayahUrls(su.n, v.a)))); Object.values(K.QURAN_EXTRA).forEach((v) => l.push(K.Q.ayahUrls(v.s, v.a))); return l; };
     const wordList = () => {
       const l = [];
       K.BASMALA.w.forEach((w) => l.push(K.Q.wordUrls(1, 1, w.i)));
@@ -315,7 +315,7 @@ window.K = window.K || {};
           field('Günlük sınır', selectCtl(s.settings, 'dailyLimit', [[0, 'Sınırsız'], [10, '10 dakika'], [15, '15 dakika'], [20, '20 dakika'], [30, '30 dakika'], [45, '45 dakika'], [60, '1 saat']])),
           field('Bugün kullanılan', h('b', null, fmtMin(K.Store.todaySecs())))),
         card('📚 Kaynaklar',
-          h('p', { class: 'help' }, 'Müfredat: Diyanet İşleri Başkanlığı Kur\'an kursu Elif-Ba sırası (harfler, şekiller, harekeler, cezm, tenvin, şedde, med). Kur\'an metni: Tanzil projesi (değiştirilmeden; Türkiye usulü yazım yalnızca gösterim ayarıdır). Meal: Diyanet İşleri Başkanlığı. Tilavet sesleri: everyayah.com, islamic.network; kelime sesleri: quran.com. Namaz kılınışı: Diyanet İlmihali. Videolar: YouTube (Musa Coşkun Hoca tilavetleri, Diyanet Çocuk). Yazı tipleri: Scheherazade New, Amiri Quran, Baloo 2 (SIL OFL).'),
+          h('p', { class: 'help' }, 'Müfredat: Diyanet İşleri Başkanlığı Kur\'an kursu Elif-Ba sırası (harfler, şekiller, harekeler, cezm, tenvin, şedde, med). Kur\'an metni: Tanzil projesi (değiştirilmeden; Türkiye usulü yazım yalnızca gösterim ayarıdır). Meal: Diyanet İşleri Başkanlığı. Tilavet: varsayılan Türk hafız İshak Danış "Âyet Âyet Kur\'an-ı Kerim" (İHL öğrencilerine eğitim amaçlı, archive.org; her âyet konuşma tanıma ile doğrulandı), ayrıca everyayah.com ve islamic.network kâri kayıtları; namaz duaları: archive.org "Namaz Sûreleri ve Duaları" hafız kaydı; kelime sesleri: quran.com. Namaz kılınışı: Diyanet İlmihali. Videolar: YouTube (Musa Coşkun Hoca tilavetleri, Diyanet Çocuk). Yazı tipleri: Scheherazade New, Amiri Quran, Baloo 2 (SIL OFL).'),
           h('p', { class: 'help' }, 'Sürüm ' + K.N.version())),
         card('⚠️ Sıfırla', h('p', { class: 'help' }, 'Tüm ilerleme, yıldız ve çıkartmalar silinir. Ayarlar ve ses kayıtları korunur.'),
           btn('İlerlemeyi sıfırla', 'red small', async () => { if (await K.UI.confirm('Emin misiniz?', 'Tüm ilerleme silinecek.', 'Sıfırla')) { K.Store.reset(); toast('Sıfırlandı'); R.home(); } }))));

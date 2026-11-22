@@ -9,7 +9,7 @@ window.K = window.K || {};
       rate: 0.95,          // konuşma hızı
       sylMode: 'tr',       // hece seslendirme: 'tr' (kurs usulü) | 'ar' (Arapça TTS)
       otre: 'ü',           // ince harflerde ötre: 'ü' | 'u'
-      reciter: 'husary_m',
+      reciter: 'danis',      // Türk hafız İshak Danış
       speed: 1,            // tilavet hızı
       script: 'tr',        // yazım: 'tr' Türkiye mushafı usulü | 'std' standart
       qsize: 40,           // Kur'an yazı boyutu
@@ -45,6 +45,9 @@ window.K = window.K || {};
 
   let s = DEFAULT();
   try { const raw = K.N.loadState(); if (raw) s = merge(DEFAULT(), JSON.parse(raw)); } catch (e) { console.warn('state', e); }
+
+  // göç: Türk hafız varsayılanına geç (bir kez)
+  if (!s.recMigrated2) { if (s.settings.reciter === 'husary_m') s.settings.reciter = 'danis'; s.recMigrated2 = true; }
 
   let saveTimer = null;
   const Store = {

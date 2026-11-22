@@ -283,7 +283,15 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
 
     @JavascriptInterface
     fun audioPlay(id: String, urlsJson: String, speed: Float) {
-        val urls = parseUrls(urlsJson)
+        // "#t=baş,son" (saniye) parçası: kaydın yalnızca bir bölümünü çal
+        val raw = parseUrls(urlsJson)
+        var clipStart = 0f; var clipEnd = 0f
+        raw.firstOrNull()?.substringAfter("#t=", "")?.takeIf { it.isNotEmpty() }?.let { t ->
+            val parts = t.split(",")
+            clipStart = parts.getOrNull(0)?.toFloatOrNull() ?: 0f
+            clipEnd = parts.getOrNull(1)?.toFloatOrNull() ?: 0f
+        }
+        val urls = raw.map { it.substringBefore("#") }
         val token = playToken.incrementAndGet()
         main.post { stopPlayerInternal(false) }
         io.execute {
@@ -294,12 +302,12 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
             if (src == null) { emit("audio", id, "error"); return@execute }
             main.post {
                 if (token != playToken.get()) return@post
-                startPlayer(id, src, speed)
+                startPlayer(id, src, speed, clipStart, clipEnd)
             }
         }
     }
 
-    private fun startPlayer(id: String, src: Any, speed: Float) {
+    private fun startPlayer(id: String, src: Any, speed: Float, clipStart: Float = 0f, clipEnd: Float = 0f) {
         stopPlayerInternal(false)
         try {
             val mp = MediaPlayer()
@@ -328,8 +336,22 @@ class NativeBridge(private val activity: MainActivity, private val web: WebView)
             }
             player = mp
             playingId = id
+            if (clipStart > 0f) mp.seekTo((clipStart * 1000).toInt())
             mp.start()
             emit("audio", id, "start:" + mp.duration)
+            if (clipEnd > 0f) {
+                val endMs = (clipEnd * 1000).toInt()
+                val check = object : Runnable {
+                    override fun run() {
+                        if (player !== mp) return
+                        try {
+                            if (mp.currentPosition >= endMs) { stopPlayerInternal(false); emit("audio", id, "end"); return }
+                        } catch (_: Exception) { return }
+                        main.postDelayed(this, 80)
+                    }
+                }
+                main.postDelayed(check, 80)
+            }
         } catch (e: Exception) {
             emit("audio", id, "error")
         }

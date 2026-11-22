@@ -127,7 +127,7 @@ window.K = window.K || {};
       stop();
       const g = S.gen;
       playing = true; renderBar();
-      const r = useTeacher && K.N.recHas(K.Q.ayahKey(1, 1)) ? await K.N.play('rec:' + K.Q.ayahKey(1, 1)) : await K.N.play(K.Q.ayahUrls(1, 1, reciterId), { speed: s.settings.speed || 1 });
+      const r = useTeacher && K.N.recHas(K.Q.ayahKey(1, 1)) ? await K.N.play('rec:' + K.Q.ayahKey(1, 1)) : await K.N.play(K.Q.basmalaUrls(n, reciterId), { speed: s.settings.speed || 1 });
       if (g === S.gen) { playing = false; renderBar(); }
       return r;
     }

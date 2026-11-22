@@ -21,8 +21,11 @@
 - Tüm cümleler önceden üretilip `assets/www/voice/*.mp3` olarak gömülür; `js/voice_index.js` dizindir.
   JS `K.N.speak()` önce bu paketi çalar, yoksa telefonun TTS'ine (erkek sesi tercihli) düşer.
 - Yeni/değişen metin eklediğinde: `node tools/collect_voice.js tools/voice_inventory.json` (yerel sunucu açıkken),
-  sonra `python3 tools/gen_voice.py <model_klasörü>` (Piper `tr_TR-fahrettin-medium`, `ar_JO-kareem-medium`;
+  sonra `python3 tools/gen_voice.py <model_klasörü>` (Piper `tr_TR-fahrettin-medium`;
   modeller github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models, `pip install "sherpa-onnx<2"`).
+- Arapça için yapay ses (TTS) KULLANMA (kullanıcı beğenmedi). Kur'an: varsayılan Türk hafız İshak Danış
+  (archive.org "Âyet Âyet", eşleme `js/data_quran.js` DANIS); dualar: archive.org "NamazSreleriVeDualari" hafız kaydı.
+  Yeni kayıt eklerken dosyayı Whisper (sherpa-onnx whisper-turbo) ile metne karşı doğrula.
 - Konuşulan metne çocuğun adı gibi değişkenler koyma; ad yalnızca balonda gösterilir (`S.say(metin, {show})`).
 
 ## Test

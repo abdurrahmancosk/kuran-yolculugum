@@ -26,6 +26,7 @@ window.K = window.K || {};
     const g = S.gen;
     const key = 'dua_' + d.id;
     if (K.Store.s.settings.useRec && K.N.recHas(key)) return K.N.play('rec:' + key);
+    if (d.audio) { const r = await K.N.play(d.audio()); if (r !== 'error' || g !== S.gen) return r; }
     if (d.basmala) { const r = await S.ayah(1, 1); if (r !== 'error') return r; }
     else if (d.words && d.from === 1) { const r = await S.ayah(d.s, d.a); if (r !== 'error') return r; }
     else if (d.words) {
@@ -46,7 +47,7 @@ window.K = window.K || {};
   }
   async function playSurahFull(n) {
     const g = S.gen;
-    if (n !== 1) { const r = await S.ayah(1, 1); if (r === 'error' || g !== S.gen) return r; }
+    if (n !== 1) { const r = await S.basmala(n); if (r === 'error' || g !== S.gen) return r; }
     const su = K.Q.surah(n);
     for (const v of su.v) { const r = await S.ayah(n, v.a); if (r !== 'end' || g !== S.gen) return r; await sleep(200); }
     return 'end';

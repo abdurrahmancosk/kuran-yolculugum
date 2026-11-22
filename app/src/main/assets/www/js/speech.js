@@ -58,6 +58,14 @@ window.K = window.K || {};
       return K.N.play(K.Q.ayahUrls(s, a, opts.reciter), { speed: st.speed || 1, onLoading: opts.onLoading, onStart: opts.onStart });
     },
 
+    /** Sûre başındaki besmele (hoca kaydı → seçili kâri). */
+    async basmala(s, opts = {}) {
+      const st = K.Store.s.settings;
+      const key = K.Q.ayahKey(1, 1);
+      if ((opts.useRec ?? st.useRec) && K.N.recHas(key)) { const r = await K.N.play('rec:' + key); if (r === 'end' || r === 'stop') return r; }
+      return K.N.play(K.Q.basmalaUrls(s, opts.reciter), { speed: st.speed || 1 });
+    },
+
     praise() {
       const n = K.Store.s.profile.name;
       const list = ['Aferin!', 'Harikasın!', 'Maşallah!', 'Çok güzel!', 'Süpersin!', 'Bravo!', 'Tebrikler!', 'Çok iyi!'];
